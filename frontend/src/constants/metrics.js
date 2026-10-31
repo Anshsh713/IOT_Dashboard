@@ -1,10 +1,22 @@
-export const API_URL = `http://${window.location.hostname}:5000/api/readings`;
+// VITE_API_ROOT example: http://192.168.1.20:5000/api (defaults to the same host on port 5000)
+export const API_ROOT =
+  import.meta.env.VITE_API_ROOT || `http://${window.location.hostname}:5000/api`;
+export const API_URL = `${API_ROOT}/readings`;
 export const POLL_INTERVAL_MS = 1500;
 
-// Metric configuration mapping telemetry keys to labels, units, colors, and limits
+// Used until /api/config has loaded (the backend is the source of truth)
+export const DEFAULT_THRESHOLDS = {
+  CURRENT_OVERLOAD_A: 1.0,
+  TEMP_OVERHEAT_C: 40.0,
+  TEMP_FAN_OFF_C: 35.0,
+  VOLTAGE_UNDER_V: 10.0,
+  VOLTAGE_OVER_V: 14.5,
+};
+
+// statusFields: which backend status fields (voltageStatus / currentStatus) affect this metric
 export const METRICS = {
   primVoltage: {
-    title: "Primary Mains Voltage",
+    title: "Primary Mains Voltage (estimated)",
     key: "primaryVoltageRms",
     unit: "V RMS",
     dec: 1,
@@ -13,7 +25,8 @@ export const METRICS = {
     param: "voltage",
     pin: "230V AC",
     electrical: true,
-    desc: "230 V primary, derived from the secondary via the 19.17 turns ratio.",
+    statusFields: ["voltageStatus"],
+    desc: "Estimated from the secondary using the 230:12 nameplate ratio. Real value sags under load.",
   },
   secVoltage: {
     title: "Secondary Voltage",
@@ -25,7 +38,8 @@ export const METRICS = {
     param: "voltage",
     pin: "Pin D35",
     electrical: true,
-    desc: "ZMPT101B true RMS on the 12 V secondary (limits 10.0 - 14.5 V).",
+    statusFields: ["voltageStatus"],
+    desc: "ZMPT101B true RMS on the 12 V secondary.",
   },
   current: {
     title: "Load Current",
@@ -37,7 +51,8 @@ export const METRICS = {
     param: "current",
     pin: "Pin D34",
     electrical: true,
-    desc: "ACS712 current sensor (fault limit > 1.0 A).",
+    statusFields: ["currentStatus"],
+    desc: "ACS712 current sensor.",
   },
   power: {
     title: "Secondary Apparent Power",
@@ -46,9 +61,9 @@ export const METRICS = {
     dec: 2,
     color: "#10b981",
     threshold: 15,
-    param: "current",
     pin: "S = V × I",
     electrical: true,
+    statusFields: ["voltageStatus", "currentStatus"],
     desc: "Apparent power S = V × I (not real power; no phase measurement).",
   },
   temp: {
@@ -60,7 +75,7 @@ export const METRICS = {
     threshold: 40,
     param: "temperature",
     pin: "Pin D4",
-    desc: "DHT22. Fan turns ON at 40 °C and OFF at 35 °C.",
+    desc: "DHT22. The fan turns on at the overheat limit and off below the release temperature.",
   },
   humidity: {
     title: "Relative Humidity",
@@ -74,20 +89,34 @@ export const METRICS = {
   },
 };
 
+// A rule is active when any fault with one of its `types` is present. `limit` reads live thresholds.
 export const FAULT_RULES = [
   {
-    name: "Current overload (> 1.0 A)",
-    desc: "Secondary load above 1.0 A while energized.",
-    param: "current",
+    name: "Current overload",
+    desc: "Secondary load above the overload limit while energized.",
+    types: ["CURRENT_OVERLOAD"],
+    limit: (t) => `> ${t.CURRENT_OVERLOAD_A} A`,
   },
   {
-    name: "Over-temperature (≥ 40 °C)",
-    desc: "Fan relay engages until the temperature falls to 35 °C.",
-    param: "temperature",
+    name: "Short circuit",
+    desc: "High current with collapsed voltage. Raised immediately.",
+    types: ["SHORT_CIRCUIT"],
   },
   {
-    name: "Secondary voltage window (10.0 - 14.5 V)",
-    desc: "Checked only when energized; 0 V is a safe standby.",
-    param: "voltage",
+    name: "Over-temperature",
+    desc: "Fan relay engages until the temperature falls to the release value.",
+    types: ["OVER_TEMPERATURE"],
+    limit: (t) => `≥ ${t.TEMP_OVERHEAT_C} °C`,
+  },
+  {
+    name: "Secondary voltage window",
+    desc: "Checked only when energized; 0 V alone is standby.",
+    types: ["UNDER_VOLTAGE", "OVER_VOLTAGE"],
+    limit: (t) => `${t.VOLTAGE_UNDER_V} - ${t.VOLTAGE_OVER_V} V`,
+  },
+  {
+    name: "Supply loss / voltage collapse",
+    desc: "No voltage when the line should be energized. Certain only with the GPIO 27 switch input.",
+    types: ["SUPPLY_LOSS", "VOLTAGE_COLLAPSE"],
   },
 ];

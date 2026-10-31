@@ -4,6 +4,9 @@ const telemetryController = require("../controllers/telemetryController");
 const apiKey = require("../middleware/apiKey");
 
 router.get("/readings", telemetryController.getReadings);
+router.get("/config", telemetryController.getConfig);
+router.get("/faults", telemetryController.getFaults);
+router.get("/insights", telemetryController.getInsights);
 router.get("/history", telemetryController.getHistory);
 router.post("/readings", apiKey, telemetryController.postReadings);
 

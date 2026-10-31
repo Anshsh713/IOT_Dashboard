@@ -1,11 +1,20 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { API_URL, POLL_INTERVAL_MS } from "../constants/metrics";
+import { API_ROOT, API_URL, POLL_INTERVAL_MS, DEFAULT_THRESHOLDS } from "../constants/metrics";
 
 const TelemetryContext = createContext();
 
 export function TelemetryProvider({ children }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(false);
+  const [config, setConfig] = useState(null);
+
+  // Thresholds and calibration flags come from the backend once
+  useEffect(() => {
+    fetch(`${API_ROOT}/config`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c) => c && setConfig(c))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -42,15 +51,12 @@ export function TelemetryProvider({ children }) {
     const history = data?.history ?? [];
     const connected = !error && data?.connected === true && !!readings;
     const isMainsOn = connected && Boolean(readings.isMainsOn);
-    const voltageUnavailable =
-      connected && readings.voltageStatus === "unavailable";
+    const voltageUnavailable = connected && readings.voltageStatus === "unavailable";
     const faults = connected ? (readings.faults ?? []) : [];
-    // A fault can affect several parameters (e.g. short circuit = current + voltage)
     const faultParams = new Set(faults.flatMap((f) => f.params ?? [f.param]));
+    const faultTypes = new Set(faults.map((f) => f.type));
     const fanActive = connected && readings.fanActive === true;
-    const lastSeen = data?.lastReceivedAt
-      ? new Date(data.lastReceivedAt).toLocaleTimeString()
-      : null;
+    const lastSeen = data?.lastReceivedAt ? new Date(data.lastReceivedAt).toLocaleTimeString() : null;
 
     const bannerState = !connected
       ? "standby"
@@ -72,23 +78,20 @@ export function TelemetryProvider({ children }) {
       voltageUnavailable,
       faults,
       faultParams,
+      faultTypes,
       fanActive,
       lastSeen,
       bannerState,
+      thresholds: config?.thresholds ?? DEFAULT_THRESHOLDS,
+      calibration: config?.calibration ?? null,
     };
-  }, [data, error]);
+  }, [data, error, config]);
 
-  return (
-    <TelemetryContext.Provider value={value}>
-      {children}
-    </TelemetryContext.Provider>
-  );
+  return <TelemetryContext.Provider value={value}>{children}</TelemetryContext.Provider>;
 }
 
 export function useTelemetry() {
   const context = useContext(TelemetryContext);
-  if (!context) {
-    throw new Error("useTelemetry must be used within a TelemetryProvider");
-  }
+  if (!context) throw new Error("useTelemetry must be used within a TelemetryProvider");
   return context;
 }

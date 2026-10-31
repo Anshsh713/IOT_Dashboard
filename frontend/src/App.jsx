@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import "./App.css";
+import "./panels.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { TelemetryProvider } from "./context/TelemetryContext";
 import { METRICS } from "./constants/metrics";
 import Header from "./components/Header";
 import FaultBanner from "./components/FaultBanner";
 import MetricsGrid from "./components/MetricsGrid";
+import InsightsPanel from "./components/InsightsPanel";
+import SensorHealthPanel from "./components/SensorHealthPanel";
+import CalibrationHelper from "./components/CalibrationHelper";
 import FaultRulesPanel from "./components/FaultRulesPanel";
+import FaultLog from "./components/FaultLog";
 import AnalyticsModal from "./components/AnalyticsModal";
 
 function DashboardContent() {
@@ -26,13 +31,12 @@ function DashboardContent() {
       <Header />
       <FaultBanner />
       <MetricsGrid onSelectMetric={setSelectedMetricId} />
+      <InsightsPanel />
+      <SensorHealthPanel />
       <FaultRulesPanel />
-      {activeMetricCfg && (
-        <AnalyticsModal
-          cfg={activeMetricCfg}
-          onClose={() => setSelectedMetricId(null)}
-        />
-      )}
+      <FaultLog />
+      <CalibrationHelper />
+      {activeMetricCfg && <AnalyticsModal cfg={activeMetricCfg} onClose={() => setSelectedMetricId(null)} />}
     </main>
   );
 }

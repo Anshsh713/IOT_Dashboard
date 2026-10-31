@@ -1,16 +1,70 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTelemetry } from "../context/TelemetryContext";
+import { API_ROOT } from "../constants/metrics";
 import InteractiveChart from "./InteractiveChart";
+
+const RANGES = [
+  ["live", "Live"],
+  ["5", "5 min"],
+  ["60", "1 h"],
+  ["1440", "24 h"],
+];
+const CSV_KEYS = ["voltageRms", "primaryVoltageRms", "currentRms", "powerWatts", "temperatureC", "humidity"];
+
+function downloadCsv(rows, name) {
+  const lines = [["timestamp_iso", ...CSV_KEYS].join(",")];
+  rows.forEach((r) => {
+    lines.push([new Date(r.timestamp).toISOString(), ...CSV_KEYS.map((k) => (typeof r[k] === "number" ? r[k] : ""))].join(","));
+  });
+  const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function AnalyticsModal({ cfg, onClose }) {
   const { history } = useTelemetry();
   const [mode, setMode] = useState("line");
+  const [range, setRange] = useState("live");
+  const [remote, setRemote] = useState({ rows: [], loading: false, error: null });
+  const closeRef = useRef(null);
+
+  // Move focus into the dialog and give it back to the card when it closes
+  useEffect(() => {
+    const previous = document.activeElement;
+    closeRef.current?.focus();
+    return () => previous?.focus?.();
+  }, []);
+
+  // Stored history from MongoDB for the 5 min / 1 h / 24 h ranges
+  useEffect(() => {
+    if (range === "live") return;
+    let active = true;
+    async function load() {
+      setRemote((r) => ({ ...r, loading: true, error: null }));
+      try {
+        const res = await fetch(`${API_ROOT}/history?minutes=${range}&maxPoints=600`);
+        if (!res.ok) throw new Error(res.status === 503 ? "History database not connected (set MONGO_URI on the server)." : "Could not load history.");
+        const json = await res.json();
+        if (active) setRemote({ rows: json.readings, loading: false, error: null });
+      } catch (e) {
+        if (active) setRemote({ rows: [], loading: false, error: e.message });
+      }
+    }
+    load();
+    const id = setInterval(load, 15000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [range]);
+
+  const data = range === "live" ? history : remote.rows;
 
   const stats = useMemo(() => {
-    if (!cfg) return null;
-    const v = history
-      .map((h) => h[cfg.key])
-      .filter((x) => typeof x === "number");
+    const v = data.map((h) => h[cfg.key]).filter((x) => typeof x === "number");
     if (!v.length) return null;
     return {
       current: v[v.length - 1],
@@ -18,55 +72,29 @@ export default function AnalyticsModal({ cfg, onClose }) {
       max: Math.max(...v),
       avg: v.reduce((a, b) => a + b, 0) / v.length,
     };
-  }, [cfg, history]);
+  }, [cfg, data]);
 
-  if (!cfg) return null;
+  // Real spacing between samples, instead of a hard-coded number
+  const spacing =
+    data.length > 1 ? ((data[data.length - 1].timestamp - data[0].timestamp) / (data.length - 1) / 1000).toFixed(1) : null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div
-        className="modal-content"
-        role="dialog"
-        aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
             <span className="eyebrow">Detailed analytics</span>
-            <h2 style={{ margin: "4px 0 0", fontSize: 22 }}>{cfg.title}</h2>
-            <p
-              style={{
-                margin: "4px 0 0",
-                fontSize: 13,
-                color: "var(--text-secondary)",
-              }}
-            >
-              {cfg.desc}
-            </p>
+            <h2 id="modal-title" style={{ margin: "4px 0 0", fontSize: 22 }}>{cfg.title}</h2>
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>{cfg.desc}</p>
           </div>
-          <button
-            type="button"
-            className="modal-close-btn"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            ✕
-          </button>
+          <button ref={closeRef} type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         <div className="modal-stat-row">
-          {[
-            ["Current", stats?.current],
-            ["Minimum", stats?.min],
-            ["Maximum", stats?.max],
-            ["Average", stats?.avg],
-          ].map(([label, v]) => (
+          {[["Current", stats?.current], ["Minimum", stats?.min], ["Maximum", stats?.max], ["Average", stats?.avg]].map(([label, v]) => (
             <div className="stat-box" key={label}>
               <div className="stat-label">{label}</div>
-              <div
-                className="stat-value"
-                style={label === "Current" ? { color: cfg.color } : undefined}
-              >
+              <div className="stat-value" style={label === "Current" ? { color: cfg.color } : undefined}>
                 {v == null ? "--" : v.toFixed(cfg.dec)} {cfg.unit}
               </div>
             </div>
@@ -74,27 +102,16 @@ export default function AnalyticsModal({ cfg, onClose }) {
         </div>
 
         <div className="graph-toolbar">
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-            }}
-          >
-            Chart type
-          </span>
-          <div className="graph-mode-selector">
-            {[
-              ["line", "📈 Line"],
-              ["area", "🌊 Area"],
-              ["bar", "📊 Bar"],
-            ].map(([m, label]) => (
-              <button
-                key={m}
-                type="button"
-                className={`mode-btn ${mode === m ? "active" : ""}`}
-                onClick={() => setMode(m)}
-              >
+          <div className="graph-mode-selector" role="group" aria-label="Time range">
+            {RANGES.map(([r, label]) => (
+              <button key={r} type="button" className={`mode-btn ${range === r ? "active" : ""}`} onClick={() => setRange(r)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="graph-mode-selector" role="group" aria-label="Chart type">
+            {[["line", "📈 Line"], ["area", "🌊 Area"], ["bar", "📊 Bar"]].map(([m, label]) => (
+              <button key={m} type="button" className={`mode-btn ${mode === m ? "active" : ""}`} onClick={() => setMode(m)}>
                 {label}
               </button>
             ))}
@@ -102,21 +119,26 @@ export default function AnalyticsModal({ cfg, onClose }) {
         </div>
 
         <div className="chart-container">
-          <InteractiveChart data={history} cfg={cfg} mode={mode} />
+          {range !== "live" && remote.error ? (
+            <div className="chart-message">{remote.error}</div>
+          ) : (
+            <InteractiveChart data={data} cfg={cfg} mode={mode} />
+          )}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 12,
-            color: "var(--text-muted)",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <span>Last {history.length} samples</span>
-          <span>~1 sample every 2 s</span>
+        <div className="modal-footer">
+          <span>
+            {data.length} samples{spacing ? `, about ${spacing} s apart` : ""}
+            {range !== "live" && remote.loading ? " (loading...)" : ""}
+          </span>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={!data.length}
+            onClick={() => downloadCsv(data, `transformer_${range === "live" ? "live" : range + "min"}.csv`)}
+          >
+            Export CSV
+          </button>
         </div>
       </div>
     </div>

@@ -6,8 +6,10 @@ const { connectDb } = require("./config/db");
 
 const app = express();
 
-// CORS_ORIGIN example: http://localhost:5173 (defaults to allow all, fine on a private LAN)
-app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
+// CORS_ORIGIN: comma-separated list (e.g. http://localhost:5173,http://192.168.1.20:5173).
+// Leave it empty to allow any origin, which is fine on a private network.
+const origins = (process.env.CORS_ORIGIN || "").split(",").map((s) => s.trim()).filter(Boolean);
+app.use(cors({ origin: origins.length ? origins : true }));
 app.use(express.json({ limit: "15kb" }));
 
 app.use("/api", telemetryRoutes);
@@ -23,9 +25,7 @@ app.use((err, req, res, next) => {
     return res.status(413).json({ success: false, error: "Payload too large" });
   }
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Malformed JSON payload from client" });
+    return res.status(400).json({ success: false, error: "Malformed JSON payload from client" });
   }
   console.error("[Server Error]", err);
   res.status(500).json({ success: false, error: "Internal server error" });
@@ -41,9 +41,7 @@ const server = app.listen(PORT, "0.0.0.0", () => {
 });
 
 server.on("error", (err) => {
-  console.error(
-    err.code === "EADDRINUSE" ? `[Error] Port ${PORT} is already in use.` : err,
-  );
+  console.error(err.code === "EADDRINUSE" ? `[Error] Port ${PORT} is already in use.` : err);
   process.exit(1);
 });
 

@@ -1,14 +1,7 @@
 import { useTelemetry } from "../context/TelemetryContext";
 
 export default function FaultBanner() {
-  const {
-    connected,
-    faults,
-    isMainsOn,
-    voltageUnavailable,
-    lastSeen,
-    bannerState,
-  } = useTelemetry();
+  const { connected, faults, isMainsOn, voltageUnavailable, lastSeen, bannerState, thresholds: t } = useTelemetry();
 
   const icon =
     bannerState === "active-fault"
@@ -36,12 +29,12 @@ export default function FaultBanner() {
     : voltageUnavailable
       ? "The voltage reading is missing, so the transformer state is unknown. Check the ZMPT101B wiring."
       : isMainsOn
-        ? "Voltage 10-14.5 V, current ≤ 1.0 A, temperature < 40 °C."
+        ? `Voltage ${t.VOLTAGE_UNDER_V}-${t.VOLTAGE_OVER_V} V, current ≤ ${t.CURRENT_OVERLOAD_A} A, temperature < ${t.TEMP_OVERHEAT_C} °C.`
         : "Secondary voltage is 0 V and no fault was detected. The DHT22 sensor is still active.";
 
   return (
-    <div className={`fault-banner ${bannerState}`}>
-      <span className="fault-icon">{icon}</span>
+    <div className={`fault-banner ${bannerState}`} role="status" aria-live="polite">
+      <span className="fault-icon" aria-hidden="true">{icon}</span>
       <div className="fault-content">
         <div className="fault-title">{title}</div>
         {faults.length ? (
@@ -53,9 +46,7 @@ export default function FaultBanner() {
             ))}
           </ul>
         ) : (
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-            {detail}
-          </span>
+          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{detail}</span>
         )}
       </div>
     </div>

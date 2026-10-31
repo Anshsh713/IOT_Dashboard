@@ -5,23 +5,18 @@ import MetricCard from "./MetricCard";
 const STATUS_RANK = { ok: 0, uncalibrated: 1, unavailable: 2 };
 
 export default function MetricsGrid({ onSelectMetric }) {
-  const { connected, readings, isMainsOn, faults, faultParams, fanActive } =
-    useTelemetry();
+  const { connected, readings, history, isMainsOn, faults, faultParams, fanActive } = useTelemetry();
 
   function getCardProps(id) {
     const cfg = METRICS[id];
     const raw = readings?.[cfg.key];
     const isFault = connected && !!cfg.param && faultParams.has(cfg.param);
-    const value =
-      connected && typeof raw === "number" ? raw.toFixed(cfg.dec) : "--";
+    const value = connected && typeof raw === "number" ? raw.toFixed(cfg.dec) : "--";
 
     // Worst status among the sensors this metric depends on; a missing value counts as unavailable
     const status = (cfg.statusFields ?? [])
       .map((f) => readings?.[f] ?? "ok")
-      .reduce(
-        (a, b) => (STATUS_RANK[b] > STATUS_RANK[a] ? b : a),
-        raw == null ? "unavailable" : "ok",
-      );
+      .reduce((a, b) => (STATUS_RANK[b] > STATUS_RANK[a] ? b : a), raw == null ? "unavailable" : "ok");
 
     let badge = { type: "badge-green", text: "Normal" };
     let note = cfg.desc;
@@ -31,10 +26,7 @@ export default function MetricsGrid({ onSelectMetric }) {
       note = "Waiting for ESP32 data";
     } else if (isFault) {
       const f = faults.find((x) => (x.params ?? [x.param]).includes(cfg.param));
-      badge = {
-        type: "badge-red",
-        text: f ? f.type.replaceAll("_", " ") : "Fault",
-      };
+      badge = { type: "badge-red", text: f ? f.type.replaceAll("_", " ") : "Fault" };
       note = f ? f.message : "Fault detected";
     } else if (status === "unavailable") {
       badge = { type: "badge-gray", text: "No sensor data" };
@@ -47,7 +39,11 @@ export default function MetricsGrid({ onSelectMetric }) {
       note = "Value not yet verified against a reference meter.";
     }
 
-    return { id, cfg, value, badge, note, isFault, onClick: onSelectMetric };
+    const trend = connected
+      ? history.map((h) => h[cfg.key]).filter((x) => typeof x === "number").slice(-30)
+      : [];
+
+    return { id, cfg, value, badge, note, isFault, trend, onClick: onSelectMetric };
   }
 
   return (
@@ -63,11 +59,7 @@ export default function MetricsGrid({ onSelectMetric }) {
           <div className="card-meta">
             <span
               className={`badge ${
-                !connected
-                  ? "badge-gray"
-                  : fanActive
-                    ? "badge-yellow"
-                    : "badge-green"
+                !connected ? "badge-gray" : fanActive ? "badge-yellow" : "badge-green"
               }`}
             >
               {!connected ? "Offline" : fanActive ? "Fan on" : "Standby"}
@@ -84,8 +76,7 @@ export default function MetricsGrid({ onSelectMetric }) {
           </span>
         </div>
         <p className="card-footer">
-          ON at ≥ 40 °C, OFF at ≤ 35 °C. Forced ON if the temperature sensor
-          fails.
+          Turns on at the overheat limit and off at the release temperature. Forced ON if the temperature sensor fails.
         </p>
       </div>
     </section>

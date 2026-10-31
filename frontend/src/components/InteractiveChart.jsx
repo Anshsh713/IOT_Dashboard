@@ -1,21 +1,31 @@
 import { useState, useMemo } from "react";
 
-// A gap longer than this between samples (ms) breaks the line instead of drawing a false slope
-const GAP_MS = 7000;
+// A gap longer than this between samples (ms) breaks the line instead of drawing a false slope.
+// For thinned history the threshold grows with the typical spacing between points.
+const MIN_GAP_MS = 7000;
+
+function fmt(ts, long) {
+  const d = new Date(ts);
+  return long
+    ? d.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
 
 export default function InteractiveChart({ data, cfg, mode }) {
   const [hover, setHover] = useState(null);
 
-  const pts = useMemo(
-    () =>
-      data
-        .filter(
-          (d) =>
-            typeof d[cfg.key] === "number" && typeof d.timestamp === "number",
-        )
-        .map((d) => ({ ts: d.timestamp, t: d.timeLabel, v: d[cfg.key] })),
-    [data, cfg.key],
-  );
+  const { pts, gapMs } = useMemo(() => {
+    const rows = data
+      .filter((d) => typeof d[cfg.key] === "number" && typeof d.timestamp === "number")
+      .map((d) => ({ ts: d.timestamp, v: d[cfg.key] }));
+    const long = rows.length > 1 && rows[rows.length - 1].ts - rows[0].ts > 6 * 3600 * 1000;
+    const gaps = rows.slice(1).map((r, i) => r.ts - rows[i].ts).sort((a, b) => a - b);
+    const median = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0;
+    return {
+      pts: rows.map((r) => ({ ...r, t: fmt(r.ts, long) })),
+      gapMs: Math.max(MIN_GAP_MS, median * 4),
+    };
+  }, [data, cfg.key]);
 
   if (pts.length < 2) {
     return (
@@ -58,7 +68,7 @@ export default function InteractiveChart({ data, cfg, mode }) {
   const Y = (v) => pt + ch - ((v - lo) / (hi - lo)) * ch;
 
   const seg = (p, i, breakOnGap) =>
-    `${i === 0 || (breakOnGap && p.ts - pts[i - 1].ts > GAP_MS) ? "M" : "L"}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`;
+    `${i === 0 || (breakOnGap && p.ts - pts[i - 1].ts > gapMs) ? "M" : "L"}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`;
   const line = pts.map((p, i) => seg(p, i, true)).join(" ");
   const areaLine = pts.map((p, i) => seg(p, i, false)).join(" ");
   const area = `${areaLine} L${X(pts.length - 1)} ${pt + ch} L${X(0)} ${pt + ch} Z`;
@@ -82,8 +92,9 @@ export default function InteractiveChart({ data, cfg, mode }) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="svg-chart"
-        onMouseMove={onMove}
-        onMouseLeave={() => setHover(null)}
+        onPointerMove={onMove}
+        onPointerDown={onMove}
+        onPointerLeave={() => setHover(null)}
       >
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
@@ -96,14 +107,7 @@ export default function InteractiveChart({ data, cfg, mode }) {
           const y = pt + ch * (1 - s);
           return (
             <g key={s}>
-              <line
-                x1={pl}
-                y1={y}
-                x2={W - pr}
-                y2={y}
-                stroke="var(--grid-line)"
-                strokeDasharray="3 3"
-              />
+              <line x1={pl} y1={y} x2={W - pr} y2={y} stroke="var(--grid-line)" strokeDasharray="3 3" />
               <text
                 x={pl - 8}
                 y={y + 4}
@@ -118,24 +122,10 @@ export default function InteractiveChart({ data, cfg, mode }) {
           );
         })}
 
-        <text
-          x={pl}
-          y={H - 8}
-          fill="var(--text-muted)"
-          fontSize="10.5"
-          textAnchor="start"
-          fontFamily="JetBrains Mono"
-        >
+        <text x={pl} y={H - 8} fill="var(--text-muted)" fontSize="10.5" textAnchor="start" fontFamily="JetBrains Mono">
           {pts[0].t}
         </text>
-        <text
-          x={W - pr}
-          y={H - 8}
-          fill="var(--text-muted)"
-          fontSize="10.5"
-          textAnchor="end"
-          fontFamily="JetBrains Mono"
-        >
+        <text x={W - pr} y={H - 8} fill="var(--text-muted)" fontSize="10.5" textAnchor="end" fontFamily="JetBrains Mono">
           {pts[pts.length - 1].t}
         </text>
 
@@ -195,22 +185,8 @@ export default function InteractiveChart({ data, cfg, mode }) {
 
         {hp && (
           <g>
-            <line
-              x1={X(hover)}
-              y1={pt}
-              x2={X(hover)}
-              y2={pt + ch}
-              stroke="var(--accent-cyan)"
-              strokeDasharray="2 2"
-            />
-            <circle
-              cx={X(hover)}
-              cy={Y(hp.v)}
-              r="5"
-              fill={cfg.color}
-              stroke="#fff"
-              strokeWidth="2"
-            />
+            <line x1={X(hover)} y1={pt} x2={X(hover)} y2={pt + ch} stroke="var(--accent-cyan)" strokeDasharray="2 2" />
+            <circle cx={X(hover)} cy={Y(hp.v)} r="5" fill={cfg.color} stroke="#fff" strokeWidth="2" />
           </g>
         )}
       </svg>
