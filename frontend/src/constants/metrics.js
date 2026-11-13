@@ -92,6 +92,12 @@ export const METRICS = {
 // A rule is active when any fault with one of its `types` is present. `limit` reads live thresholds.
 export const FAULT_RULES = [
   {
+    name: "Multi-Fault Protection (Fan & Trip)",
+    desc: "1 or 2 faults trigger Cooling Fan (D23). 3+ concurrent faults (or short circuit) trip and close connection.",
+    types: ["CURRENT_OVERLOAD", "SHORT_CIRCUIT", "OVER_TEMPERATURE", "UNDER_VOLTAGE", "OVER_VOLTAGE", "SUPPLY_LOSS", "VOLTAGE_COLLAPSE"],
+    limit: () => "Tier 1: 1-2 Fan | Tier 2: 3+ Trip",
+  },
+  {
     name: "Current overload",
     desc: "Secondary load above the overload limit while energized.",
     types: ["CURRENT_OVERLOAD"],

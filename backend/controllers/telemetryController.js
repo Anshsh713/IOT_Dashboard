@@ -54,8 +54,17 @@ exports.postReadings = (req, res) => {
     return res.status(400).json({ success: false, error: "Invalid payload format or value out of range" });
   }
 
-  const { processedReading, detectedFaults, isMainsOn, cleanSecVoltage, cleanCurrent, tempVal, isFanEngaged } =
-    processTelemetry(req.body);
+  const {
+    processedReading,
+    detectedFaults,
+    faultCount,
+    connectionClosed,
+    isMainsOn,
+    cleanSecVoltage,
+    cleanCurrent,
+    tempVal,
+    isFanEngaged,
+  } = processTelemetry(req.body);
 
   telemetryStore.saveReading(processedReading);
 
@@ -71,8 +80,16 @@ exports.postReadings = (req, res) => {
       cleanSecVoltage ?? "--"
     }V | Cur: ${cleanCurrent ?? "--"}A | Temp: ${tempVal ?? "--"}C | Fan: ${
       isFanEngaged ? "ON" : "OFF"
-    } | Faults: ${detectedFaults.length}`
+    } | Faults: ${detectedFaults.length}${connectionClosed ? " | 🚨 CONNECTION CLOSED (TRIPPED)" : ""}`
   );
 
-  res.json({ success: true, timestamp: processedReading.timestamp, faults: detectedFaults });
+  res.json({
+    success: true,
+    timestamp: processedReading.timestamp,
+    faults: detectedFaults,
+    faultCount,
+    fanActive: isFanEngaged,
+    connectionClosed,
+    disconnect: connectionClosed,
+  });
 };

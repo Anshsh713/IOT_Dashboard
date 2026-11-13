@@ -60,10 +60,12 @@ function processTelemetry(raw, now = Date.now()) {
   const expectedOn =
     typeof raw.expectedOn === "boolean" ? raw.expectedOn : null;
 
+  // State flag only. It never changes the displayed voltage.
   const isMainsOn = v !== null && v >= THRESHOLDS.VOLTAGE_ENERGIZED_MIN_V;
   const recentlyHealthy = now - lastHealthy.at < THRESHOLDS.COLLAPSE_WINDOW_MS;
 
-  const cleanSecVoltage = v === null ? null : isMainsOn ? r1(v) : 0;
+  // CHANGED: always show the real measured value (no forcing to 0)
+  const cleanSecVoltage = v === null ? null : r2(v);
   const cleanPrimVoltage =
     cleanSecVoltage === null ? null : r1(cleanSecVoltage * TURNS_RATIO);
   // Current is kept even when voltage is low: a short circuit is low voltage + high current
@@ -108,7 +110,7 @@ function processTelemetry(raw, now = Date.now()) {
         "VOLTAGE_COLLAPSE",
         "WARNING",
         ["voltage"],
-        `Voltage dropped from ${lastHealthy.voltage.toFixed(1)} V to 0 V within ${Math.round(THRESHOLDS.COLLAPSE_WINDOW_MS / 1000)} s. Unconfirmed: a deliberate switch-off looks the same.`,
+        `Voltage dropped from ${lastHealthy.voltage.toFixed(1)} V to ${v.toFixed(1)} V within ${Math.round(THRESHOLDS.COLLAPSE_WINDOW_MS / 1000)} s. Unconfirmed: a deliberate switch-off looks the same.`,
       );
     }
   }
@@ -158,14 +160,31 @@ function processTelemetry(raw, now = Date.now()) {
     lastHealthy.current = cleanCurrent ?? 0;
   }
 
-  // Trust the relay state reported by the ESP32 (it owns hysteresis and the sensor-failure fail-safe)
-  const isFanEngaged = raw.fanActive === true;
+  const faultCount = faults.length;
+  const isShortCircuit = faults.some((f) => f.type === "SHORT_CIRCUIT");
+
+  // Rule:
+  // 1 or 2 faults -> Fan turns ON automatically to cool down the unit.
+  // 3 or more faults (or SHORT_CIRCUIT) -> Trip/close connection + Warning signal on screen.
+  const connectionClosed = faultCount >= 3 || isShortCircuit;
+
+  // Fan active decision:
+  // If 1 or more faults are active -> Fan forced ON.
+  // If temperature >= 40.0°C -> Fan forced ON.
+  // If temperature <= 35.0°C and 0 faults -> Fan turns OFF.
+  let isFanEngaged = raw.fanActive === true;
+  if (faultCount >= 1 || (tempVal !== null && tempVal >= THRESHOLDS.TEMP_OVERHEAT_C)) {
+    isFanEngaged = true;
+  } else if (tempVal !== null && tempVal <= THRESHOLDS.TEMP_FAN_OFF_C && faultCount === 0) {
+    isFanEngaged = false;
+  }
 
   const deEnergizedFault = faults.some((f) =>
     ["SHORT_CIRCUIT", "SUPPLY_LOSS", "VOLTAGE_COLLAPSE"].includes(f.type),
   );
-  const systemState =
-    v === null
+  const systemState = connectionClosed
+    ? "TRIPPED_CONNECTION_CLOSED"
+    : v === null
       ? "UNKNOWN"
       : isMainsOn
         ? "ENERGIZED"
@@ -198,6 +217,8 @@ function processTelemetry(raw, now = Date.now()) {
     humidity: humVal,
 
     fanActive: isFanEngaged,
+    faultCount,
+    connectionClosed,
     faultDetected: faults.length > 0,
     faults,
 
@@ -208,6 +229,8 @@ function processTelemetry(raw, now = Date.now()) {
   return {
     processedReading,
     detectedFaults: faults,
+    faultCount,
+    connectionClosed,
     isMainsOn,
     cleanSecVoltage,
     cleanCurrent,

@@ -1,31 +1,49 @@
 import { useTelemetry } from "../context/TelemetryContext";
 
 export default function FaultBanner() {
-  const { connected, faults, isMainsOn, voltageUnavailable, lastSeen, bannerState, thresholds: t } = useTelemetry();
+  const {
+    connected,
+    faults,
+    faultCount,
+    connectionClosed,
+    isMainsOn,
+    voltageUnavailable,
+    lastSeen,
+    bannerState,
+    thresholds: t,
+  } = useTelemetry();
 
-  const icon =
-    bannerState === "active-fault"
-      ? "🚨"
-      : bannerState === "healthy"
-        ? "🛡️"
-        : !connected
-          ? "📡"
-          : voltageUnavailable
-            ? "❓"
-            : "💤";
+  // Dynamic status theme:
+  // Not connected -> Green
+  // Connected -> Blue
+  // Any fault -> Red
+  const isFault = (faults && faults.length > 0) || connectionClosed;
+  const bannerStatusClass = !connected
+    ? "banner-green-standby"
+    : isFault
+      ? "banner-red-fault"
+      : "banner-blue-connected";
+
+  const icon = isFault
+    ? (connectionClosed ? "🛑" : "🚨")
+    : !connected
+      ? "🟢"
+      : "⚡";
 
   const title = !connected
-    ? "NO LIVE DATA"
-    : faults.length
-      ? `FAULT DETECTED (${faults.length} active)`
-      : voltageUnavailable
-        ? "VOLTAGE SENSOR UNAVAILABLE"
-        : isMainsOn
-          ? "SYSTEM HEALTHY"
-          : "TRANSFORMER STANDBY (MAINS OFF)";
+    ? "ESP32 DISCONNECTED — STANDBY SYSTEM READY"
+    : connectionClosed
+      ? `CRITICAL TRIP: CONNECTION CLOSED (${faults.length} FAULTS)`
+      : faults.length
+        ? `FAULT DETECTED (${faults.length} active) — COOLING FAN RUNNING`
+        : voltageUnavailable
+          ? "VOLTAGE SENSOR UNAVAILABLE"
+          : isMainsOn
+            ? "SYSTEM HEALTHY — TELEMETRY STREAMING"
+            : "TRANSFORMER STANDBY (MAINS OFF)";
 
   const detail = !connected
-    ? `Status unknown.${lastSeen ? ` Last data received at ${lastSeen}.` : ""} Fan control keeps running on the ESP32 itself.`
+    ? `Waiting for ESP32 Wi-Fi connection.${lastSeen ? ` Last received at ${lastSeen}.` : ""} Autonomous on-chip protection active.`
     : voltageUnavailable
       ? "The voltage reading is missing, so the transformer state is unknown. Check the ZMPT101B wiring."
       : isMainsOn
@@ -33,10 +51,19 @@ export default function FaultBanner() {
         : "Secondary voltage is 0 V and no fault was detected. The DHT22 sensor is still active.";
 
   return (
-    <div className={`fault-banner ${bannerState}`} role="status" aria-live="polite">
+    <div
+      className={`fault-banner ${bannerStatusClass} ${connectionClosed ? "critical-trip" : ""}`}
+      role="status"
+      aria-live="polite"
+    >
       <span className="fault-icon" aria-hidden="true">{icon}</span>
       <div className="fault-content">
         <div className="fault-title">{title}</div>
+        {connectionClosed && (
+          <div className="fault-critical-notice">
+            ⚠️ <strong>Emergency Multi-Fault Trip:</strong> 3 or more concurrent problems detected (or short circuit). Line connection closed/tripped to prevent transformer burnout. Cooling fan forced ON.
+          </div>
+        )}
         {faults.length ? (
           <ul className="fault-list">
             {faults.map((f) => (

@@ -32,6 +32,8 @@ class TelemetryStore {
       temperatureC: reading.temperatureC,
       humidity: reading.humidity,
       fanActive: reading.fanActive,
+      faultCount: reading.faultCount ?? 0,
+      connectionClosed: reading.connectionClosed ?? false,
       faultDetected: reading.faultDetected
     };
 

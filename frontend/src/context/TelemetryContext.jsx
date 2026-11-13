@@ -56,17 +56,21 @@ export function TelemetryProvider({ children }) {
     const faultParams = new Set(faults.flatMap((f) => f.params ?? [f.param]));
     const faultTypes = new Set(faults.map((f) => f.type));
     const fanActive = connected && readings.fanActive === true;
+    const connectionClosed = connected && (readings.connectionClosed === true || faults.length >= 3);
+    const faultCount = faults.length;
     const lastSeen = data?.lastReceivedAt ? new Date(data.lastReceivedAt).toLocaleTimeString() : null;
 
     const bannerState = !connected
       ? "standby"
-      : faults.length
-        ? "active-fault"
-        : voltageUnavailable
-          ? "standby"
-          : isMainsOn
-            ? "healthy"
-            : "standby";
+      : connectionClosed
+        ? "critical-trip"
+        : faults.length
+          ? "active-fault"
+          : voltageUnavailable
+            ? "standby"
+            : isMainsOn
+              ? "healthy"
+              : "standby";
 
     return {
       data,
@@ -77,6 +81,8 @@ export function TelemetryProvider({ children }) {
       isMainsOn,
       voltageUnavailable,
       faults,
+      faultCount,
+      connectionClosed,
       faultParams,
       faultTypes,
       fanActive,
