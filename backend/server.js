@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const telemetryRoutes = require("./routes/telemetryRoutes");
-const { connectDb } = require("./config/db");
 
 const app = express();
 
@@ -36,8 +35,8 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log("-----------------------------------------");
   console.log(` Smart Transformer API Server: Port ${PORT}`);
   console.log(` API key check: ${process.env.API_KEY ? "ON" : "OFF"}`);
+  console.log(" Telemetry storage: High-speed In-Memory");
   console.log("-----------------------------------------");
-  connectDb();
 });
 
 server.on("error", (err) => {
@@ -45,7 +44,7 @@ server.on("error", (err) => {
   process.exit(1);
 });
 
-// Do not keep running in an unknown state: log and exit (use nodemon or pm2 to restart)
+// Do not keep running in an unknown state: log and exit
 process.on("uncaughtException", (err) => {
   console.error("[Uncaught Exception]", err);
   process.exit(1);

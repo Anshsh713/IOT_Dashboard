@@ -35,7 +35,7 @@ const DEBOUNCE = {
   IMMEDIATE_TYPES: ["SHORT_CIRCUIT", "SUPPLY_LOSS"],
 };
 
-const MAX_HISTORY = 60;
+const MAX_HISTORY = 600; // Rolling in-memory history buffer (up to ~30 mins at 2.5s interval)
 const CONNECTION_TIMEOUT_MS = 6500;
 
 module.exports = {

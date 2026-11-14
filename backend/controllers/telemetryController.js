@@ -1,6 +1,4 @@
 const telemetryStore = require("../models/telemetryModel");
-const Reading = require("../models/readingModel");
-const { isDbConnected } = require("../config/db");
 const { THRESHOLDS, CALIBRATION } = require("../config/constants");
 const { isValidTelemetryPayload, processTelemetry } = require("../services/telemetryService");
 const { computeInsights } = require("../services/insightsService");
@@ -25,30 +23,22 @@ exports.getInsights = (req, res) => {
   res.json(computeInsights(telemetryStore.getInsightSamples()));
 };
 
-/** GET /api/history?minutes=60&maxPoints=600: stored readings, evenly thinned to maxPoints */
-exports.getHistory = async (req, res) => {
-  if (!isDbConnected()) {
-    return res.status(503).json({ success: false, error: "History database not connected" });
-  }
+/** GET /api/history?minutes=60&maxPoints=600: rolling in-memory readings, evenly thinned to maxPoints */
+exports.getHistory = (req, res) => {
   const minutes = Math.min(Math.max(Number(req.query.minutes) || 60, 1), 1440);
   const maxPoints = Math.min(Math.max(Number(req.query.maxPoints) || 600, 50), 2000);
   const since = Date.now() - minutes * 60 * 1000;
+
   try {
-    const rows = await Reading.find({ timestamp: { $gte: since } })
-      .sort({ timestamp: 1 })
-      .limit(60000)
-      .select("timestamp voltageRms primaryVoltageRms currentRms powerWatts temperatureC humidity fanActive faultDetected -_id")
-      .lean();
-    const step = Math.ceil(rows.length / maxPoints);
-    const readings = step > 1 ? rows.filter((_, i) => i % step === 0 || i === rows.length - 1) : rows;
-    res.json({ success: true, minutes, total: rows.length, count: readings.length, readings });
+    const readings = telemetryStore.getHistory(since, maxPoints);
+    res.json({ success: true, minutes, total: readings.length, count: readings.length, readings });
   } catch (err) {
     console.error("[History]", err.message);
     res.status(500).json({ success: false, error: "Could not load history" });
   }
 };
 
-/** POST /api/readings: ingest ESP32 telemetry, analyse faults, store */
+/** POST /api/readings: ingest ESP32 telemetry, analyse faults, store in-memory */
 exports.postReadings = (req, res) => {
   if (!isValidTelemetryPayload(req.body)) {
     return res.status(400).json({ success: false, error: "Invalid payload format or value out of range" });
@@ -67,13 +57,6 @@ exports.postReadings = (req, res) => {
   } = processTelemetry(req.body);
 
   telemetryStore.saveReading(processedReading);
-
-  // Fire-and-forget: a database problem must never block or fail the ESP32's request
-  if (isDbConnected()) {
-    Reading.create({ ...processedReading, raw: req.body }).catch((err) =>
-      console.error("[DB] save failed:", err.message)
-    );
-  }
 
   console.log(
     `[Telemetry ${new Date().toLocaleTimeString()}] Mains: ${isMainsOn ? "ON" : "OFF"} | SecV: ${

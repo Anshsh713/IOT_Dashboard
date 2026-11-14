@@ -94,6 +94,12 @@ class TelemetryStore {
     return this.insightBuffer;
   }
 
+  getHistory(since = 0, maxPoints = 600) {
+    const rows = this.historyBuffer.filter((h) => h.timestamp >= since);
+    const step = Math.ceil(rows.length / maxPoints);
+    return step > 1 ? rows.filter((_, i) => i % step === 0 || i === rows.length - 1) : rows;
+  }
+
   clear() {
     this.latestReading = null;
     this.lastReceivedAt = null;

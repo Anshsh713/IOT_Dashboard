@@ -38,7 +38,7 @@ export default function AnalyticsModal({ cfg, onClose }) {
     return () => previous?.focus?.();
   }, []);
 
-  // Stored history from MongoDB for the 5 min / 1 h / 24 h ranges
+  // Stored rolling history for the 5 min / 1 h / 24 h ranges
   useEffect(() => {
     if (range === "live") return;
     let active = true;
@@ -46,7 +46,7 @@ export default function AnalyticsModal({ cfg, onClose }) {
       setRemote((r) => ({ ...r, loading: true, error: null }));
       try {
         const res = await fetch(`${API_ROOT}/history?minutes=${range}&maxPoints=600`);
-        if (!res.ok) throw new Error(res.status === 503 ? "History database not connected (set MONGO_URI on the server)." : "Could not load history.");
+        if (!res.ok) throw new Error("Could not load history.");
         const json = await res.json();
         if (active) setRemote({ rows: json.readings, loading: false, error: null });
       } catch (e) {
