@@ -7,12 +7,9 @@ import { METRICS } from "./constants/metrics";
 import Header from "./components/Header";
 import FaultBanner from "./components/FaultBanner";
 import Transformer3DModel from "./components/Transformer3DModel";
+import CenterTapHeroWidget from "./components/CenterTapHeroWidget";
 import MetricsGrid from "./components/MetricsGrid";
-import InsightsPanel from "./components/InsightsPanel";
-import SensorHealthPanel from "./components/SensorHealthPanel";
-import CalibrationHelper from "./components/CalibrationHelper";
-import FaultRulesPanel from "./components/FaultRulesPanel";
-import FaultLog from "./components/FaultLog";
+import OperationsHub from "./components/OperationsHub";
 import AnalyticsModal from "./components/AnalyticsModal";
 
 function DashboardContent() {
@@ -40,18 +37,38 @@ function DashboardContent() {
 
   return (
     <main
-      className={`dashboard ${systemStatusTheme}`}
+      className={`dashboard modern-dashboard ${systemStatusTheme}`}
       data-system-status={systemStatusTheme}
     >
       <Header />
       <FaultBanner />
-      <Transformer3DModel />
-      <MetricsGrid onSelectMetric={setSelectedMetricId} />
-      <InsightsPanel />
-      <SensorHealthPanel />
-      <FaultRulesPanel />
-      <FaultLog />
-      <CalibrationHelper />
+
+      {/* Master Command Grid: 3D Digital Twin (65%) + Center-Tap & Safety HUD (35%) */}
+      <section className="hero-command-grid">
+        <div className="hero-left-3d">
+          <Transformer3DModel />
+        </div>
+        <div className="hero-right-hud">
+          <CenterTapHeroWidget />
+        </div>
+      </section>
+
+      {/* Live Metrics Bento Grid with Hover Smooth Spline Graphs */}
+      <section className="metrics-section">
+        <div className="section-title-row">
+          <div className="sec-heading">
+            <span className="sec-chip">TELEMETRY STREAM</span>
+            <h3>Electrical &amp; Environmental Telemetry</h3>
+          </div>
+          <span className="sec-hint">Hover any metric card to reveal live spline graph</span>
+        </div>
+        <MetricsGrid onSelectMetric={setSelectedMetricId} />
+      </section>
+
+      {/* Modern Operations & Intelligence Hub (Tabbed) */}
+      <OperationsHub />
+
+      {/* Analytics Modal for Deep Dive */}
       {activeMetricCfg && (
         <AnalyticsModal
           cfg={activeMetricCfg}

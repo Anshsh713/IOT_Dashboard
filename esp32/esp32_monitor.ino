@@ -53,7 +53,7 @@ const float CURRENT_NOISE_FLOOR = 20.0f;
 const float SMOOTH_ALPHA = 0.3f;     // Low-pass filter smoothing coefficient
 
 // ---------- Thresholds for Protection ----------
-const float THRESHOLD_CURRENT_OVERLOAD_A = 1.0f; // Current overload at 1.0 A
+const float THRESHOLD_CURRENT_OVERLOAD_A = 0.5f; // Current overload at 0.5 A
 const float THRESHOLD_SHORT_CIRCUIT_A    = 2.0f; // Critical short circuit
 const float THRESHOLD_VOLTAGE_UNDER_V    = 10.0f;// Undervoltage limit
 const float THRESHOLD_VOLTAGE_OVER_V     = 14.5f;// Overvoltage limit
