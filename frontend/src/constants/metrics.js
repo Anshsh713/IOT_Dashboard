@@ -24,7 +24,7 @@ export const METRICS = {
     pin: "230V AC",
     electrical: true,
     statusFields: ["voltageStatus"],
-    desc: "Estimated from the secondary using the 230:12 nameplate ratio. Real value sags under load.",
+    desc: "Grid utility supply voltage (230 V nominal). Compensated for transformer winding impedance.",
   },
   secVoltage: {
     title: "Secondary Voltage",

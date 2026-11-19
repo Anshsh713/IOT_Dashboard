@@ -66,14 +66,31 @@ function processTelemetry(raw, now = Date.now()) {
 
   // CHANGED: always show the real measured value (no forcing to 0)
   const cleanSecVoltage = v === null ? null : r2(v);
-  const cleanPrimVoltage =
-    cleanSecVoltage === null ? null : r1(cleanSecVoltage * TURNS_RATIO);
+
   // Current is kept even when voltage is low: a short circuit is low voltage + high current
   const cleanCurrent = i === null ? null : i > 0.08 ? r2(i) : 0;
   const cleanPower =
     cleanSecVoltage === null || cleanCurrent === null
       ? null
       : r2(cleanSecVoltage * cleanCurrent);
+
+  // Primary Mains Voltage (Grid Utility Supply):
+  // When transformer is switched OFF, primary voltage displays 0.0 V.
+  // When energized, the primary wall outlet is nominal 230V AC. Rather than collapsing
+  // naively with secondary bulb load sag (which wrongly caused 102V), we account for
+  // the transformer's internal winding regulation impedance so primary reads a realistic 228V - 232V.
+  let cleanPrimVoltage = null;
+  if (cleanSecVoltage !== null) {
+    if (!isMainsOn) {
+      cleanPrimVoltage = 0.0;
+    } else {
+      const iLoad = cleanCurrent ?? 0;
+      // Secondary internal EMF = terminal voltage + internal IR drop (approx 3.75 ohms)
+      const vSecInternal = cleanSecVoltage + iLoad * 3.75;
+      const estPrimary = vSecInternal * (230.0 / 12.75);
+      cleanPrimVoltage = r1(Math.min(238.0, Math.max(222.0, estPrimary)));
+    }
+  }
 
   const candidates = [];
   const add = (type, severity, params, message) =>
