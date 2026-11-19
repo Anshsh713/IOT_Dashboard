@@ -47,8 +47,8 @@ export default function FaultBanner() {
     : voltageUnavailable
       ? "The voltage reading is missing, so the transformer state is unknown. Check the ZMPT101B wiring."
       : isMainsOn
-        ? `Voltage ${t.VOLTAGE_UNDER_V}-${t.VOLTAGE_OVER_V} V, current ≤ ${t.CURRENT_OVERLOAD_A} A, temperature < ${t.TEMP_OVERHEAT_C} °C.`
-        : "Secondary voltage is 0 V and no fault was detected. The DHT22 sensor is still active.";
+        ? `Current ≤ ${t.CURRENT_OVERLOAD_A} A, temperature < ${t.TEMP_OVERHEAT_C} °C.`
+        : "Secondary voltage is 0 V (Transformer OFF). Temperature & humidity active.";
 
   return (
     <div

@@ -6,15 +6,22 @@
     - ZMPT101B AC Voltage Sensor: GPIO 35 (ADC1_CH7)
     - ACS712 AC Current Sensor:   GPIO 34 (ADC1_CH6)
     - DHT22 Temp & Humidity:      GPIO 4
-    - Relay (Cooling Fan / Load): GPIO 23 (Active HIGH)
+    - Relay (Cooling Fan):        GPIO 23 (Active LOW relay board)
     - Status & Alarm LED:         GPIO 2
     - Main Switch Sense:          GPIO 27 (Input Pullup, optional)
 
-  Protection Tiers:
-    - Tier 1 (1 or 2 faults): Cooling fan (Relay D23) engages ON automatically.
-    - Tier 2 (3 or more faults or Short Circuit): System connection CLOSED / TRIPPED,
-      screen warning triggered, alarm LED strobes rapidly.
-    - Normal (0 faults): Thermal control (Fan ON >= 40°C, Fan OFF <= 35°C).
+  Calibrations & Fixes Applied:
+    1. RELAY INVERSION FIXED (Active LOW):
+       - Normal / No Fault: Fan is OFF (Relay de-energized).
+       - Fault / Overload (> 1.0A) or Overheat (>= 40°C): Fan turns ON!
+    2. VOLTAGE CALIBRATION (Fitted to Multimeter 13.35V -> 7.75V):
+       - Scale: VOLTS_SCALE = 1.690f.
+       - Noise Floor: 3.50 mV (transformer OFF clamps cleanly to 0.00 V).
+       - NO voltage faults (under/over-voltage faults removed; normal load sag
+         never triggers the cooling fan or dashboard alerts).
+    3. CURRENT CALIBRATION:
+       - AMPS_PER_COUNT = 0.01215f (matches multimeter 0.38A, 0.59A, 0.90A, 1.04A, 1.23A).
+       - Zero cutoff at 0.10 A eliminates resting noise.
   ====================================================================
 */
 
@@ -27,8 +34,8 @@
 const char* WIFI_SSID     = "realme 8";
 const char* WIFI_PASSWORD = "m9wyr2ej";
 
-// Primary and fallback server URLs
-const char* SERVER_URL    = "http://192.168.1.7:5000/api/readings";
+// Primary Backend Server URL
+const char* SERVER_URL    = "http://10.21.19.202:5000/api/readings";
 const char* API_KEY       = "";
 
 // ---------- Pin Definitions ----------
@@ -44,25 +51,40 @@ const bool HAS_MAIN_SWITCH = false;
 
 DHT dht(DHT_PIN, DHT_TYPE);
 
-// ---------- Calibration & Tuning ----------
-// Voltage RMS measured in millivolts (calibrated ADC). VOLTS_PER_COUNT = real secondary volts per 1 mV RMS.
-float VOLTS_PER_COUNT = 1.0f;        // Tune with Dashboard Calibration Helper
-const float VOLTAGE_NOISE_MV = 4.0f; // Idle noise mV with transformer OFF
-float AMPS_PER_COUNT  = 0.01307f;    // ACS712-05B sensitivity factor
-const float CURRENT_NOISE_FLOOR = 20.0f;
-const float SMOOTH_ALPHA = 0.3f;     // Low-pass filter smoothing coefficient
+// ====================================================================
+// CALIBRATION & SENSOR TUNING
+// ====================================================================
 
-// ---------- Thresholds for Protection ----------
-const float THRESHOLD_CURRENT_OVERLOAD_A = 0.5f; // Current overload at 0.5 A
-const float THRESHOLD_SHORT_CIRCUIT_A    = 2.0f; // Critical short circuit
-const float THRESHOLD_VOLTAGE_UNDER_V    = 10.0f;// Undervoltage limit
-const float THRESHOLD_VOLTAGE_OVER_V     = 14.5f;// Overvoltage limit
-const float FAN_ON_TEMP                  = 40.0f;// Thermal Fan ON threshold
-const float FAN_OFF_TEMP                 = 35.0f;// Thermal Fan OFF release threshold
+// --- Voltage Calibration (ZMPT101B) ---
+// Calibrated from your 8-point multimeter data (13.35V down to 7.75V):
+// No-load: Raw 7.90 mV -> 13.35 V AC (Scale = 1.690f)
+// 3 Bulbs: Raw 4.59 mV ->  7.75 V AC
+// Idle noise: Raw < 3.5 mV -> Transformer OFF (displays exactly 0.00 V AC)
+float VOLTS_SCALE = 1.690f; 
+float VOLTAGE_NOISE_FLOOR_MV = 3.50f;
+
+// --- Current Calibration (ACS712) ---
+// Fitted to multimeter measurements (0.38A, 0.59A, 0.90A, 1.04A, 1.23A)
+const float AMPS_PER_COUNT = 0.01215f; 
+
+// Below this current, sensor resting noise is clamped to 0.00 A (No Load)
+const float CURRENT_ZERO_CUTOFF_A = 0.10f; 
+
+// Low-pass filter smoothing coefficient (0.20 = smooth and responsive)
+const float SMOOTH_ALPHA_V = 0.20f; 
+const float SMOOTH_ALPHA_I = 0.25f; 
+
+// ---------- Protection & Relay Thresholds ----------
+const float THRESHOLD_CURRENT_OVERLOAD_A = 1.0f;  // Fan turns ON when Current > 1.0 A
+const float THRESHOLD_SHORT_CIRCUIT_A    = 2.2f;  // Critical short circuit limit
+const float FAN_ON_TEMP                  = 40.0f; // Fan turns ON when Temp >= 40.0 °C
+const float FAN_OFF_TEMP                 = 35.0f; // Fan turns OFF when Temp <= 35.0 °C
 const int   DHT_FAIL_LIMIT               = 5;
 const bool  FAN_ON_SENSOR_FAILURE        = false;
 const unsigned long DHT_FAILSAFE_DELAY_MS = 120000;
-const bool  RELAY_ACTIVE_HIGH            = true;
+
+// RELAY POLARITY: Most 5V relay modules are Active LOW (LOW = Relay ON, HIGH = Relay OFF)
+const bool  RELAY_ACTIVE_HIGH            = false; 
 
 void setRelay(bool on) {
   digitalWrite(RELAY_PIN, (on == RELAY_ACTIVE_HIGH) ? HIGH : LOW);
@@ -79,20 +101,23 @@ float lastValidTemp     = -999.0f;
 float lastValidHumidity = -999.0f;
 int   dhtFailCount      = 0;
 unsigned long dhtFailSince = 0;
+
 float vSmooth = 0.0f;
 bool  vSmoothInit = false;
+float iSmooth = 0.0f;
+bool  iSmoothInit = false;
 
 unsigned long previousSendTime      = 0;
 unsigned long previousBlinkTime     = 0;
 unsigned long lastReconnectAttempt  = 0;
 
-const unsigned long SEND_INTERVAL       = 2000; // 2 seconds
-const unsigned long BLINK_INTERVAL      = 500;  // 500 ms normal heartbeat
-const unsigned long TRIP_BLINK_INTERVAL = 100;  // 100 ms rapid alarm strobe
+const unsigned long SEND_INTERVAL       = 2000; // Send telemetry every 2 seconds
+const unsigned long BLINK_INTERVAL      = 500;  // Normal heartbeat (500ms)
+const unsigned long TRIP_BLINK_INTERVAL = 100;  // Rapid alarm strobe (100ms)
 
-// ---------- True AC RMS for Current (Counts) ----------
+// ---------- True AC RMS for Current (ADC Counts, 5 cycles at 50Hz) ----------
 float readTrueRms(int pin, float &meanOut) {
-  const unsigned long windowUs = 100000; // 100 ms = 5 full 50Hz cycles
+  const unsigned long windowUs = 100000; // 100 ms
   unsigned long start = micros();
   double sum = 0, sumSq = 0;
   long n = 0;
@@ -106,13 +131,13 @@ float readTrueRms(int pin, float &meanOut) {
   if (n == 0) { meanOut = 0.0f; return 0.0f; }
   double mean = sum / n;
   meanOut = (float)mean;
-  double var = (sumSq / n) - mean * mean;
+  double var = (sumSq / n) - (mean * mean);
   return var > 0 ? (float)sqrt(var) : 0.0f;
 }
 
-// ---------- True AC RMS for Voltage (Millivolts via Calibrated ADC) ----------
+// ---------- True AC RMS for Voltage (Millivolts, 10 full 50Hz cycles) ----------
 float readTrueRmsMv(int pin, float &meanMvOut) {
-  const unsigned long windowUs = 200000; // 200 ms = 10 full 50Hz cycles
+  const unsigned long windowUs = 200000; // 200 ms
   unsigned long start = micros();
   double sum = 0, sumSq = 0;
   long n = 0;
@@ -126,14 +151,14 @@ float readTrueRmsMv(int pin, float &meanMvOut) {
   if (n == 0) { meanMvOut = 0.0f; return 0.0f; }
   double mean = sum / n;
   meanMvOut = (float)mean;
-  double var = (sumSq / n) - mean * mean;
+  double var = (sumSq / n) - (mean * mean);
   return var > 0 ? (float)sqrt(var) : 0.0f;
 }
 
 bool adcLooksDisconnected(float meanCounts) { return meanCounts < 100.0f || meanCounts > 3995.0f; }
 bool mvLooksDisconnected(float meanMv)      { return meanMv < 80.0f || meanMv > 3150.0f; }
 
-// ---------- DHT22 Robust Climate Reader ----------
+// ---------- DHT22 Climate Reader ----------
 void readClimate(float &t, float &h) {
   t = dht.readTemperature(false, true);
   h = dht.readHumidity(true);
@@ -174,58 +199,60 @@ void thermalControl() {
   }
 }
 
-// ---------- Local Protection Evaluator (Tier 1 & Tier 2) ----------
+// ---------- Protection & Relay Evaluator ----------
+// Rules:
+// 1. Normal (no fault): Fan is OFF.
+// 2. Relay runs ONLY when Current > 1.0 A OR Temperature >= 40.0 °C.
+// 3. NO voltage faults (voltage sag under load is normal and does NOT trigger relay).
 void evaluateProtection(float volts, float amps, float temp, bool vOk, bool iOk, bool hasTemp) {
   int faults = 0;
+  bool isOverload = false;
+  bool isOverheat = false;
+  bool isShortCircuit = false;
 
-  // Check 1: Current Overload > 1.0 A
+  // Check 1: Current Overload (> 1.0 A)
   if (iOk && amps > THRESHOLD_CURRENT_OVERLOAD_A) {
     faults++;
+    isOverload = true;
     Serial.printf("[Fault Detected] Current Overload: %.2f A > %.1f A\n", amps, THRESHOLD_CURRENT_OVERLOAD_A);
   }
 
-  // Check 2: Short Circuit (High Current + Collapsed Voltage)
-  if (iOk && amps > THRESHOLD_SHORT_CIRCUIT_A && volts < THRESHOLD_VOLTAGE_UNDER_V) {
-    faults += 2; // Short circuit is immediately critical
-    Serial.printf("[Fault Detected] Short Circuit: %.2f A with voltage %.1f V!\n", amps, volts);
+  // Check 2: Short Circuit (> 2.2 A)
+  if (iOk && amps > THRESHOLD_SHORT_CIRCUIT_A) {
+    faults += 2;
+    isShortCircuit = true;
+    Serial.printf("[Fault Detected] Critical Short Circuit: %.2f A!\n", amps);
   }
 
-  // Check 3: Over-Temperature >= 40 °C
+  // Check 3: Over-Temperature (>= 40.0 °C)
   if (hasTemp && temp >= FAN_ON_TEMP) {
     faults++;
+    isOverheat = true;
     Serial.printf("[Fault Detected] Over-Temperature: %.1f C >= %.1f C\n", temp, FAN_ON_TEMP);
-  }
-
-  // Check 4: Voltage Window when Energized
-  if (vOk && volts >= 1.0f) {
-    if (volts < THRESHOLD_VOLTAGE_UNDER_V) {
-      faults++;
-      Serial.printf("[Fault Detected] Under-Voltage: %.1f V < %.1f V\n", volts, THRESHOLD_VOLTAGE_UNDER_V);
-    } else if (volts > THRESHOLD_VOLTAGE_OVER_V) {
-      faults++;
-      Serial.printf("[Fault Detected] Over-Voltage: %.1f V > %.1f V\n", volts, THRESHOLD_VOLTAGE_OVER_V);
-    }
   }
 
   localFaultCount = faults;
 
-  // DUAL-TIER LOGIC:
-  // 1 or 2 faults: Fan ON automatically to cool down the system.
-  // 3 or more faults: Closed / tripped connection + Warning signal on screen.
-  if (faults >= 3) {
+  // RELAY / FAN CONTROL:
+  // Fan is ON ONLY if Current > 1.0 A OR Temperature >= 40.0 °C
+  bool relayTrigger = (isOverload || isOverheat);
+
+  if (isShortCircuit || faults >= 3) {
     connectionTripped = true;
     fanActive = true;
     setRelay(true);
-    Serial.printf("🚨 [EMERGENCY TRIP] %d Faults Active! Connection CLOSED to protect transformer!\n", faults);
-  } else if (faults >= 1 || (hasTemp && temp >= FAN_ON_TEMP)) {
+    Serial.printf("🚨 [EMERGENCY TRIP] Short circuit / critical fault! Line connection tripped!\n");
+  } else if (relayTrigger) {
     fanActive = true;
     setRelay(true);
-    Serial.printf("⚠️ [TIER 1] %d Fault(s) active -> Relay Fan ON\n", faults);
-  } else if (hasTemp && temp <= FAN_OFF_TEMP && faults == 0) {
+    Serial.printf("⚠️ [Relay ON] %s%s%s -> Fan RUNNING\n",
+                  isOverload ? "Current > 1.0A " : "",
+                  (isOverload && isOverheat) ? "+ " : "",
+                  isOverheat ? "Temp >= 40°C" : "");
+  } else if ((!hasTemp || temp <= FAN_OFF_TEMP) && !isOverload) {
     if (!connectionTripped) {
       fanActive = false;
-      setRelay(false);
-      Serial.println("[Normal] System healthy -> Relay Fan OFF");
+      setRelay(false); // Normal state: Fan OFF
     }
   }
 }
@@ -248,29 +275,20 @@ void connectWiFi() {
   }
 }
 
-const char* resetReasonText() {
-  switch (esp_reset_reason()) {
-    case ESP_RST_POWERON:  return "power-on";
-    case ESP_RST_SW:       return "software reset";
-    case ESP_RST_PANIC:    return "crash (panic)";
-    case ESP_RST_INT_WDT:
-    case ESP_RST_TASK_WDT:
-    case ESP_RST_WDT:      return "watchdog";
-    case ESP_RST_BROWNOUT: return "BROWNOUT (power dip)";
-    default:               return "other";
-  }
-}
-
 void setup() {
   Serial.begin(115200);
   delay(500);
-  Serial.printf("\n[Boot] Smart Transformer Health Monitor starting (Reset: %s)\n", resetReasonText());
+  Serial.println("\n=======================================================");
+  Serial.println("  Smart Transformer Health Monitor - ESP32 Firmware  ");
+  Serial.println("  Relay: Active LOW (Normal=OFF, Fault/Overload=ON)   ");
+  Serial.println("  Voltage Scale: 1.690 | Current Scale: 0.01215      ");
+  Serial.println("=======================================================");
 
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
 
   pinMode(RELAY_PIN, OUTPUT);
-  setRelay(false); // Fan strictly OFF at boot
+  setRelay(false); // Fan starts OFF in normal condition
 
   pinMode(MAIN_SW_PIN, INPUT_PULLUP);
 
@@ -280,7 +298,7 @@ void setup() {
 
   pinMode(DHT_PIN, INPUT_PULLUP);
   dht.begin();
-  delay(1200); // Warm up DHT22
+  delay(1200);
 
   connectWiFi();
 }
@@ -289,7 +307,7 @@ void loop() {
   unsigned long now = millis();
   bool wifiOk = (WiFi.status() == WL_CONNECTED);
 
-  // Auto-reconnect Wi-Fi
+  // Auto-reconnect Wi-Fi if dropped
   if (!wifiOk) {
     backendConnected = false;
     if (now - lastReconnectAttempt >= 3500) {
@@ -300,45 +318,64 @@ void loop() {
     }
   }
 
-  // Telemetry cycle every 2 seconds
+  // Telemetry acquisition loop every 2 seconds
   if (now - previousSendTime >= SEND_INTERVAL) {
     previousSendTime = now;
     thermalControl();
 
-    float vMeanMv, iMean;
+    float vMeanMv = 0.0f;
+    float iMeanCounts = 0.0f;
+
+    // 1. Read True RMS values from sensors
     float vRawMv  = readTrueRmsMv(VOLTAGE_PIN, vMeanMv);
-    float iCounts = readTrueRms(CURRENT_PIN, iMean);
+    float iCounts = readTrueRms(CURRENT_PIN, iMeanCounts);
+
     bool vOk = !mvLooksDisconnected(vMeanMv);
-    bool iOk = !adcLooksDisconnected(iMean);
+    bool iOk = !adcLooksDisconnected(iMeanCounts);
 
-    // Filter idle noise and smooth
-    float vSig = sqrtf(fmaxf(0.0f, vRawMv * vRawMv - VOLTAGE_NOISE_MV * VOLTAGE_NOISE_MV));
-    if (!vSmoothInit) { vSmooth = vSig; vSmoothInit = true; }
-    else vSmooth += SMOOTH_ALPHA * (vSig - vSmooth);
+    // 2. Smooth raw readings using low-pass filter
+    if (!vSmoothInit) { vSmooth = vRawMv; vSmoothInit = true; }
+    else { vSmooth += SMOOTH_ALPHA_V * (vRawMv - vSmooth); }
 
-    float volts = vSmooth * VOLTS_PER_COUNT;
-    float amps  = (iCounts - CURRENT_NOISE_FLOOR) * AMPS_PER_COUNT;
-    if (amps < 0.0f) amps = 0.0f;
+    if (!iSmoothInit) { iSmooth = iCounts; iSmoothInit = true; }
+    else { iSmooth += SMOOTH_ALPHA_I * (iCounts - iSmooth); }
+
+    // 3. Calculate Voltage (RMS Volts)
+    // If vSmooth is below noise floor (3.50 mV), transformer is OFF -> exactly 0.00 V
+    float volts = 0.0f;
+    if (vSmooth > VOLTAGE_NOISE_FLOOR_MV) {
+      volts = vSmooth * VOLTS_SCALE;
+    }
+
+    // 4. Calculate Current (RMS Amperes)
+    float amps = iSmooth * AMPS_PER_COUNT;
+    if (amps < CURRENT_ZERO_CUTOFF_A) {
+      amps = 0.0f; // Clamp resting noise to 0.00A
+    }
 
     bool hasTemp = (lastValidTemp > -900.0f) && (dhtFailCount < DHT_FAIL_LIMIT);
     bool hasHum  = (lastValidHumidity > -900.0f) && (dhtFailCount < DHT_FAIL_LIMIT);
     bool expectedOn = (digitalRead(MAIN_SW_PIN) == LOW);
 
-    // Evaluate protection tiers (1-2 faults: Fan ON, 3+ faults: Connection closed)
+    // 5. Evaluate local safety protection (Relay only on Current > 1A or Temp >= 40C)
     evaluateProtection(volts, amps, lastValidTemp, vOk, iOk, hasTemp);
 
-    Serial.printf("[Telemetry] V:%s (raw %.1f mV) | A:%s | T:%s | Fan:%s | State:%s\n",
-                  vOk ? String(volts, 2).c_str() : "n/a", vRawMv,
-                  iOk ? String(amps, 2).c_str() : "n/a",
-                  hasTemp ? String(lastValidTemp, 1).c_str() : "n/a",
+    // 6. Print diagnostics to Serial Monitor
+    Serial.printf("[Sensor Diagnostics]\n");
+    Serial.printf("  Voltage -> Raw: %6.2f mV  | Calculated: %5.2f V AC\n", vRawMv, volts);
+    Serial.printf("  Current -> Raw: %6.1f cnt | Calculated: %5.2f A AC\n", iCounts, amps);
+    Serial.printf("  Climate -> Temp: %4.1f C   | Humidity:   %4.1f %%\n", 
+                  hasTemp ? lastValidTemp : 0.0f, hasHum ? lastValidHumidity : 0.0f);
+    Serial.printf("  Status  -> Fan: %s | State: %s\n\n",
                   fanActive ? "ON" : "OFF",
                   connectionTripped ? "TRIPPED" : "NORMAL");
 
+    // 7. Send telemetry payload to backend
     if (wifiOk) {
       String p = "{";
       p += "\"voltageCounts\":" + (vOk ? String(vSmooth, 2) : String("null"));
       p += ",\"voltageRms\":" + (vOk ? String(volts, 2) : String("null"));
-      p += ",\"currentCounts\":" + (iOk ? String(iCounts, 2) : String("null"));
+      p += ",\"currentCounts\":" + (iOk ? String(iSmooth, 2) : String("null"));
       p += ",\"currentRms\":" + (iOk ? String(amps, 2) : String("null"));
       p += ",\"temperatureC\":" + (hasTemp ? String(lastValidTemp, 1) : String("null"));
       p += ",\"humidity\":" + (hasHum ? String(lastValidHumidity, 1) : String("null"));
@@ -355,7 +392,6 @@ void loop() {
       int httpCode = http.POST(p);
       backendConnected = (httpCode == 200);
 
-      // Parse backend directives
       if (backendConnected) {
         String resp = http.getString();
         if (resp.indexOf("\"connectionClosed\":true") >= 0 || resp.indexOf("\"disconnect\":true") >= 0) {
@@ -366,8 +402,10 @@ void loop() {
         if (resp.indexOf("\"fanActive\":true") >= 0) {
           fanActive = true;
           setRelay(true);
-        } else if (resp.indexOf("\"fanActive\":false") >= 0 && localFaultCount == 0 && (lastValidTemp < FAN_ON_TEMP)) {
-          if (!connectionTripped) {
+        } else if (resp.indexOf("\"fanActive\":false") >= 0) {
+          bool isOverload = (iOk && amps > THRESHOLD_CURRENT_OVERLOAD_A);
+          bool isOverheat = (hasTemp && lastValidTemp >= FAN_ON_TEMP);
+          if (!connectionTripped && !isOverload && !isOverheat) {
             fanActive = false;
             setRelay(false);
           }
@@ -379,7 +417,7 @@ void loop() {
 
   // ---------- LED Heartbeat & Alarm Blink ----------
   if (connectionTripped) {
-    // 3+ faults emergency: rapid alarm strobe (100ms)
+    // Short circuit emergency: rapid alarm strobe (100ms)
     if (now - previousBlinkTime >= TRIP_BLINK_INTERVAL) {
       previousBlinkTime = now;
       ledState = !ledState;

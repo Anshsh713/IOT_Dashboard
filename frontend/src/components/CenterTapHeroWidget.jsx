@@ -123,7 +123,7 @@ export default function CenterTapHeroWidget() {
             </span>
           </div>
           <div className="tier-desc">
-            Engages Relay D23 when 1-2 faults occur or Temp &ge; 40.0&deg;C.
+            Engages Relay D23 when Current &gt; 1.0A or Temp &ge; 40.0&deg;C.
           </div>
         </div>
 

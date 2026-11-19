@@ -2,8 +2,8 @@
 const TURNS_RATIO = 230.0 / 12.0;
 
 const THRESHOLDS = {
-  CURRENT_OVERLOAD_A: 0.5, // Secondary load current > 0.5 A
-  SHORT_CIRCUIT_A: 2.0, // TUNE: set above your measured overload current
+  CURRENT_OVERLOAD_A: 1.0, // Secondary load current > 1.0 A
+  SHORT_CIRCUIT_A: 2.2, // Critical short circuit limit
   TEMP_OVERHEAT_C: 40.0, // Thermal overheat threshold: >= 40.0 °C
   TEMP_FAN_OFF_C: 35.0, // Fan turns off at or below 35.0 °C
   VOLTAGE_ENERGIZED_MIN_V: 1.0, // CHANGED (was 8.5). Only decides ON vs standby; never changes the displayed value

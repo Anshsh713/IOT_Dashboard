@@ -6,11 +6,9 @@ export const POLL_INTERVAL_MS = 1500;
 
 // Used until /api/config has loaded (the backend is the source of truth)
 export const DEFAULT_THRESHOLDS = {
-  CURRENT_OVERLOAD_A: 0.5,
+  CURRENT_OVERLOAD_A: 1.0,
   TEMP_OVERHEAT_C: 40.0,
   TEMP_FAN_OFF_C: 35.0,
-  VOLTAGE_UNDER_V: 10.0,
-  VOLTAGE_OVER_V: 14.5,
 };
 
 // statusFields: which backend status fields (voltageStatus / currentStatus) affect this metric
@@ -47,7 +45,7 @@ export const METRICS = {
     unit: "A RMS",
     dec: 2,
     color: "#f59e0b",
-    threshold: 0.5,
+    threshold: 1.0,
     param: "current",
     pin: "Pin D34",
     electrical: true,

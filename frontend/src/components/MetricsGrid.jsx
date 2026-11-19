@@ -126,7 +126,7 @@ export default function MetricsGrid({ onSelectMetric }) {
             ? "⚠️ Multi-fault trip: 3+ faults detected! Line connection closed; fan running."
             : fanActive && faults.length > 0
               ? `Engaged automatically: cooling transformer during ${faults.length} active fault(s).`
-              : "Dual-tier control: ON if 1-2 faults or overheat (≥ 40°C). Trips line connection if 3+ faults."}
+              : "Dual-tier control: ON if Current > 1.0A or Overheat (≥ 40°C). Trips line connection if short circuit occurs."}
         </p>
       </div>
     </section>

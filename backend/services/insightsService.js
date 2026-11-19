@@ -88,21 +88,19 @@ function healthIndex(samples, now, unstable) {
   const lastTemp = [...win].reverse().find((s) => isNum(s.t));
   const share = (fn) => (energized.length ? energized.filter(fn).length / energized.length : 0);
 
-  const thermal = lastTemp ? clamp((lastTemp.t - 30) / (THRESHOLDS.TEMP_OVERHEAT_C - 30), 0, 1) * 30 : 0;
-  const overload = share((s) => isNum(s.i) && s.i > THRESHOLDS.CURRENT_OVERLOAD_A) * 30;
-  const voltage = share((s) => s.v < THRESHOLDS.VOLTAGE_UNDER_V || s.v > THRESHOLDS.VOLTAGE_OVER_V) * 25;
-  const stability = unstable ? 15 : 0;
+  const thermal = lastTemp ? clamp((lastTemp.t - 30) / (THRESHOLDS.TEMP_OVERHEAT_C - 30), 0, 1) * 35 : 0;
+  const overload = share((s) => isNum(s.i) && s.i > THRESHOLDS.CURRENT_OVERLOAD_A) * 45;
+  const stability = unstable ? 20 : 0;
 
-  const score = Math.round(100 - (thermal + overload + voltage + stability));
+  const score = Math.round(100 - (thermal + overload + stability));
   const label = score >= 90 ? "Good" : score >= 70 ? "Fair" : score >= 50 ? "Needs attention" : "Service advised";
   return {
     score,
     label,
     breakdown: [
-      { name: "Temperature", penalty: Math.round(thermal), max: 30 },
-      { name: "Overload", penalty: Math.round(overload), max: 30 },
-      { name: "Voltage window", penalty: Math.round(voltage), max: 25 },
-      { name: "Instability", penalty: stability, max: 15 }
+      { name: "Temperature", penalty: Math.round(thermal), max: 35 },
+      { name: "Current Overload", penalty: Math.round(overload), max: 45 },
+      { name: "Instability", penalty: stability, max: 20 }
     ]
   };
 }
