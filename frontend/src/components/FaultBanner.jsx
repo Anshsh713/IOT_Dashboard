@@ -14,7 +14,7 @@ export default function FaultBanner() {
   } = useTelemetry();
 
   // Dynamic status theme:
-  // Not connected -> Green
+  // Not connected -> White
   // Connected -> Blue
   // Any fault -> Red
   const isFault = (faults && faults.length > 0) || connectionClosed;
@@ -27,7 +27,7 @@ export default function FaultBanner() {
   const icon = isFault
     ? (connectionClosed ? "🛑" : "🚨")
     : !connected
-      ? "🟢"
+      ? "⚪"
       : "⚡";
 
   const title = !connected

@@ -22,7 +22,7 @@ export default function CenterTapHeroWidget() {
   healthScore = Math.max(0, Math.min(100, Math.round(healthScore)));
 
   const healthColor = !connected
-    ? "var(--accent-green)"
+    ? "var(--status-theme-color)"
     : isTrip || healthScore < 50
       ? "var(--accent-red)"
       : healthScore < 80

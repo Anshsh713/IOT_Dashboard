@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import "./panels.css";
-import { ThemeProvider } from "./context/ThemeContext";
 import { TelemetryProvider, useTelemetry } from "./context/TelemetryContext";
 import { METRICS } from "./constants/metrics";
 import Header from "./components/Header";
@@ -25,8 +24,8 @@ function DashboardContent() {
 
   const activeMetricCfg = selectedMetricId ? METRICS[selectedMetricId] : null;
 
-  // USER COLOR THEME LOGIC:
-  // 1. When ESP32 is NOT connected -> GREEN
+  // SYSTEM STATUS COLOR LOGIC:
+  // 1. When ESP32 is NOT connected -> WHITE
   // 2. When ESP32 is CONNECTED -> BLUE
   // 3. When ANY FAULT happens -> RED
   const systemStatusTheme = !connected
@@ -81,10 +80,8 @@ function DashboardContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <TelemetryProvider>
-        <DashboardContent />
-      </TelemetryProvider>
-    </ThemeProvider>
+    <TelemetryProvider>
+      <DashboardContent />
+    </TelemetryProvider>
   );
 }

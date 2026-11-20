@@ -35,30 +35,6 @@
   --radius: 16px;
 }
 
-body.light-theme {
-  --bg-primary: #eef2f7;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #f3f6fa;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
-  --border-color: #dfe6ef;
-  --border-hover: #c3cfdf;
-  --text-primary: #0f172a;
-  --text-secondary: #4b5b73;
-  --text-muted: #6b7a96;
-  --accent-cyan: #0284c7;
-  --accent-cyan-bg: rgba(2, 132, 199, 0.1);
-  --accent-green: #059669;
-  --accent-green-bg: rgba(5, 150, 105, 0.1);
-  --accent-yellow: #b45309;
-  --accent-yellow-bg: rgba(180, 83, 9, 0.1);
-  --accent-red: #dc2626;
-  --accent-red-bg: rgba(220, 38, 38, 0.08);
-  --shadow-main:
-    0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
-  --grid-line: rgba(0, 0, 0, 0.07);
-}
-
 body {
   margin: 0;
   background:
@@ -104,7 +80,7 @@ body {
   pointer-events: none;
   background: radial-gradient(
     circle at 50% -20%,
-    var(--status-theme-glow, rgba(16, 185, 129, 0.22)),
+    var(--status-theme-glow, rgba(255, 255, 255, 0.22)),
     transparent 70%
   );
   z-index: -1;
@@ -160,7 +136,6 @@ h1 {
   align-items: center;
   gap: 10px;
 }
-.theme-toggle-btn,
 .connection-pill {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -174,17 +149,6 @@ h1 {
   box-shadow: var(--shadow-main);
   color: var(--text-primary);
 }
-.theme-toggle-btn {
-  cursor: pointer;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
-}
-.theme-toggle-btn:hover {
-  border-color: var(--border-hover);
-  background: var(--bg-tertiary);
-}
-
 .dot {
   width: 8px;
   height: 8px;
@@ -240,13 +204,13 @@ h1 {
 }
 .fault-banner.healthy,
 .fault-banner.banner-green-standby {
-  border-left-color: #10b981;
+  border-left-color: #fff;
   background: linear-gradient(
     90deg,
-    rgba(16, 185, 129, 0.16),
+    rgba(255, 255, 255, 0.16),
     var(--bg-card) 60%
   );
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.12);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.12);
 }
 .fault-banner.banner-blue-connected {
   border-left-color: #0ea5e9;
@@ -269,7 +233,7 @@ h1 {
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
 }
 .fault-banner.standby {
-  border-left-color: #10b981;
+  border-left-color: #fff;
 }
 .fault-banner.critical-trip {
   border-left-color: #ef4444;
@@ -697,20 +661,20 @@ h1 {
    3. Fault (Any Fault or Trip)            -> RED
    ==================================================================== */
 
-/* State 1: Disconnected -> Green */
+/* State 1: Disconnected -> White */
 .dashboard.status-disconnected-green {
-  --status-theme-color: #10b981;
-  --status-theme-glow: rgba(16, 185, 129, 0.28);
-  --status-theme-border: rgba(16, 185, 129, 0.38);
-  --status-theme-bg: rgba(16, 185, 129, 0.08);
+  --status-theme-color: #fff;
+  --status-theme-glow: rgba(255, 255, 255, 0.28);
+  --status-theme-border: rgba(255, 255, 255, 0.38);
+  --status-theme-bg: rgba(255, 255, 255, 0.08);
 }
 .dashboard.status-disconnected-green .eyebrow,
 .dashboard.status-disconnected-green .model-tag {
-  color: #10b981;
+  color: #fff;
 }
 .dashboard.status-disconnected-green .model-tag {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* State 2: Connected -> Blue */
@@ -756,13 +720,13 @@ h1 {
 
 /* Connection Pills for 3 states */
 .connection-pill.pill-green {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.1);
-  color: #34d399;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 .connection-pill.pill-green .dot {
-  background: #10b981;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3);
   animation: beat-green 2s infinite;
 }
 @keyframes beat-green {
@@ -845,7 +809,7 @@ h1 {
     box-shadow 0.3s;
 }
 .dashboard.status-disconnected-green .transformer-3d-card {
-  border-color: rgba(16, 185, 129, 0.32);
+  border-color: rgba(255, 255, 255, 0.32);
 }
 .dashboard.status-connected-blue .transformer-3d-card {
   border-color: rgba(14, 165, 233, 0.32);
@@ -983,7 +947,7 @@ h1 {
   align-items: flex-end;
 }
 .t3d-hud-card {
-  background: rgba(14, 21, 36, 0.88);
+  background: rgba(24, 24, 24, 0.92);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   padding: 10px 14px;
@@ -1055,7 +1019,7 @@ h1 {
   align-items: center;
   gap: 6px;
   font-size: 10.5px;
-  background: rgba(14, 21, 36, 0.85);
+  background: rgba(24, 24, 24, 0.92);
   backdrop-filter: blur(8px);
   border: 1px solid var(--border-color);
   padding: 3px 9px;
@@ -1079,7 +1043,7 @@ h1 {
   pointer-events: auto;
 }
 .hud-pill {
-  background: rgba(14, 21, 36, 0.88);
+  background: rgba(24, 24, 24, 0.92);
   backdrop-filter: blur(10px);
   border: 1px solid var(--border-color);
   padding: 6px 12px;
@@ -1201,7 +1165,7 @@ h1 {
   transition: border-color 0.3s;
 }
 .dashboard.status-disconnected-green .center-tap-hero-card {
-  border-color: rgba(16, 185, 129, 0.32);
+  border-color: rgba(255, 255, 255, 0.32);
 }
 .dashboard.status-connected-blue .center-tap-hero-card {
   border-color: rgba(14, 165, 233, 0.32);
@@ -1469,7 +1433,7 @@ h1 {
   transition: border-color 0.3s;
 }
 .dashboard.status-disconnected-green .operations-hub-card {
-  border-color: rgba(16, 185, 129, 0.32);
+  border-color: rgba(255, 255, 255, 0.32);
 }
 .dashboard.status-connected-blue .operations-hub-card {
   border-color: rgba(14, 165, 233, 0.32);
@@ -1581,7 +1545,7 @@ h1 {
 .hover-smooth-graph-container {
   margin: 12px 0 8px;
   padding: 12px 14px;
-  background: rgba(7, 11, 19, 0.85);
+  background: rgba(20, 20, 20, 0.92);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -1673,18 +1637,17 @@ h1 {
 
   /* Status colours as RGB triplets: change one line to recolour a whole state */
   --on-rgb: 0, 229, 255; /* ESP32 connected */
-  --off-rgb:
-    45, 255, 160; /* ESP32 disconnected. Try 255, 176, 32 (amber) so green only means "data is arriving" */
+  --off-rgb: 255, 255, 255; /* ESP32 disconnected */
   --ok-rgb: 45, 255, 160; /* system healthy */
   --fault-rgb: 255, 77, 109; /* fault */
 
-  --bg-primary: #04070e;
-  --bg-secondary: #080f1f;
-  --bg-tertiary: #0e1933;
-  --bg-card: #09111f;
-  --bg-card-hover: #0d1a33;
-  --border-color: #14264d;
-  --border-hover: #2c58c9;
+  --bg-primary: #000000;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1b1b1b;
+  --bg-card: #141414;
+  --bg-card-hover: #202020;
+  --border-color: #2b2b2b;
+  --border-hover: #484848;
   --text-primary: #eaf3ff;
   --text-secondary: #9fb4d9;
   --text-muted: #6783b3;
@@ -1702,85 +1665,13 @@ h1 {
   --radius: 18px;
 }
 
-body.light-theme {
-  --on-rgb: 0, 97, 255;
-  --off-rgb: 0, 168, 107;
-  --ok-rgb: 0, 168, 107;
-  --fault-rgb: 224, 25, 63;
-  --bg-primary: #e8f0ff;
-  --bg-secondary: #f4f8ff;
-  --bg-tertiary: #e3ecff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f4f8ff;
-  --border-color: #c9d9fb;
-  --border-hover: #7aa2ff;
-  --text-primary: #0a1630;
-  --text-secondary: #3f5683;
-  --text-muted: #647aa6;
-  --accent-cyan: #0061ff;
-  --accent-cyan-bg: rgba(0, 97, 255, 0.1);
-  --accent-green: #008a58;
-  --accent-green-bg: rgba(0, 168, 107, 0.12);
-  --accent-yellow: #a86a00;
-  --accent-yellow-bg: rgba(184, 121, 0, 0.12);
-  --accent-red: #d4143a;
-  --accent-red-bg: rgba(224, 25, 63, 0.09);
-  --grid-line: rgba(0, 60, 200, 0.12);
-  --shadow-main:
-    0 1px 2px rgba(10, 30, 90, 0.08), 0 10px 28px rgba(10, 30, 90, 0.1);
-}
-
-/* ---------- Background: glow + faint circuit grid ---------- */
+/* ---------- Solid black background ---------- */
 body {
-  background:
-    radial-gradient(
-      1100px 520px at 80% -12%,
-      rgba(47, 107, 255, 0.22),
-      transparent 62%
-    ),
-    radial-gradient(
-      800px 420px at 8% -8%,
-      rgba(0, 229, 255, 0.14),
-      transparent 60%
-    ),
-    var(--bg-primary);
-  background-attachment: fixed;
-}
-body.light-theme {
-  background:
-    radial-gradient(
-      900px 420px at 80% -10%,
-      rgba(0, 97, 255, 0.14),
-      transparent 60%
-    ),
-    var(--bg-primary);
+  background: #000;
   background-attachment: fixed;
 }
 body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
-  background-size: 48px 48px;
-  -webkit-mask-image: radial-gradient(
-    ellipse 85% 62% at 50% 0%,
-    #000 25%,
-    transparent 78%
-  );
-  mask-image: radial-gradient(
-    ellipse 85% 62% at 50% 0%,
-    #000 25%,
-    transparent 78%
-  );
-}
-body.light-theme::before {
-  background-image:
-    linear-gradient(rgba(0, 60, 200, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 60, 200, 0.07) 1px, transparent 1px);
+  display: none;
 }
 * {
   scrollbar-width: thin;
@@ -1927,16 +1818,12 @@ body.light-theme::before {
   background: linear-gradient(
     100deg,
     var(--text-primary) 35%,
-    var(--accent-cyan)
+    var(--status-theme-color, var(--accent-cyan))
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-}
-.header .eyebrow::before {
-  content: "⚡";
-  margin-right: 6px;
 }
 .card-value,
 .hud-val,
@@ -1951,11 +1838,6 @@ body.light-theme::before {
 .card.is-fault .card-value {
   text-shadow: 0 0 22px rgba(var(--fault-rgb), 0.5);
 }
-body.light-theme .card-value,
-body.light-theme .card.is-fault .card-value {
-  text-shadow: none;
-}
-
 /* ---------- Layout ---------- */
 .dashboard {
   width: min(1320px, 95%);
@@ -2045,12 +1927,6 @@ body.light-theme .card.is-fault .card-value {
     0 12px 36px rgba(0, 0, 0, 0.45),
     0 0 28px var(--status-theme-glow, rgba(0, 229, 255, 0.18));
 }
-body.light-theme .card:hover,
-body.light-theme .modern-metric-card:hover {
-  box-shadow:
-    0 0 0 1px var(--status-theme-border, transparent),
-    0 12px 30px rgba(10, 30, 90, 0.14);
-}
 .metrics-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
@@ -2085,21 +1961,12 @@ body.light-theme .modern-metric-card:hover {
 }
 
 /* Buttons */
-.theme-toggle-btn:hover,
 .t3d-mode-btn:hover,
 .t3d-action-btn:hover {
   box-shadow: 0 0 16px rgba(var(--on-rgb), 0.25);
 }
 .mode-btn.active {
   box-shadow: 0 0 14px rgba(var(--on-rgb), 0.45);
-}
-
-/* ---------- Light mode: dark "glass" overlays would hide dark text ---------- */
-body.light-theme .t3d-hud-card,
-body.light-theme .hud-pill,
-body.light-theme .t3d-sensor-chip,
-body.light-theme .hover-smooth-graph-container {
-  background: rgba(255, 255, 255, 0.92);
 }
 
 /* ---------- Responsive ---------- */
@@ -2138,5 +2005,293 @@ body.light-theme .hover-smooth-graph-container {
   }
   .metrics-grid > :last-child:nth-child(odd) {
     grid-column: auto;
+  }
+}
+
+/* ==========================================================================
+   PART 3: HEADER
+   ========================================================================== */
+
+.hdr-brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  flex: 1 1 520px;
+}
+
+/* Small transformer logo, takes the status colour (white / cyan / red) */
+.hdr-logo {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--status-theme-color, rgb(var(--on-rgb)));
+  background: var(--bg-card);
+  border: 1px solid var(--status-theme-border, var(--border-color));
+  box-shadow: 0 0 22px var(--status-theme-glow, rgba(var(--on-rgb), 0.25));
+  transition: color 0.4s, border-color 0.4s, box-shadow 0.4s;
+}
+.hdr-logo svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* Backend offline pill (was missing before) */
+.connection-pill.pill-offline-gray {
+  border-color: rgba(159, 180, 217, 0.35);
+  background: rgba(159, 180, 217, 0.08);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+  .hdr-brand {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ==========================================================================
+   PART 4: ANIMATED STATUS PILL
+   ========================================================================== */
+
+.status-pill-x {
+  --p: var(--on-rgb);
+  position: relative;
+  overflow: hidden;
+  gap: 12px;
+  padding: 9px 18px 9px 14px;
+  border-radius: 14px;
+  isolation: isolate;
+  transition: border-color 0.4s, background 0.4s, color 0.4s;
+}
+.status-pill-x[data-state="standby"] {
+  --p: var(--off-rgb);
+}
+.status-pill-x[data-state="live"] {
+  --p: var(--on-rgb);
+}
+.status-pill-x[data-state="fault"] {
+  --p: var(--fault-rgb);
+}
+.status-pill-x[data-state="offline"] {
+  --p: 159, 180, 217;
+}
+
+/* Moving light sweep across the pill */
+.status-pill-x::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(var(--p), 0.22) 50%,
+    transparent 70%
+  );
+  background-size: 250% 100%;
+  animation: pill-sweep 3.2s linear infinite;
+}
+@keyframes pill-sweep {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Icon */
+.pill-icon {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.pill-core {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgb(var(--p));
+  box-shadow: 0 0 10px rgba(var(--p), 0.9);
+  position: relative;
+  z-index: 2;
+}
+.pill-icon::before,
+.pill-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--p), 0.7);
+  opacity: 0;
+}
+
+/* Live: ripples expanding outward */
+.status-pill-x[data-state="live"] .pill-icon::before {
+  animation: ripple 1.8s ease-out infinite;
+}
+.status-pill-x[data-state="live"] .pill-icon::after {
+  animation: ripple 1.8s ease-out 0.9s infinite;
+}
+@keyframes ripple {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* Standby: radar sweep while searching */
+.status-pill-x[data-state="standby"] .pill-icon::before {
+  opacity: 1;
+  border: 1px solid rgba(var(--p), 0.45);
+  background: conic-gradient(
+    from 0deg,
+    rgba(var(--p), 0.55),
+    rgba(var(--p), 0) 40%
+  );
+  animation: radar 2s linear infinite;
+}
+.status-pill-x[data-state="standby"] .pill-core {
+  animation: breathe 2s ease-in-out infinite;
+}
+@keyframes radar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes breathe {
+  50% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+}
+
+/* Fault: fast alarm flash, ring, and shake */
+.status-pill-x[data-state="fault"] {
+  animation: pill-shake 2.4s ease-in-out infinite;
+}
+.status-pill-x[data-state="fault"] .pill-core {
+  animation: alarm 0.45s ease-in-out infinite alternate;
+}
+.status-pill-x[data-state="fault"] .pill-icon::before {
+  animation: ripple 0.9s ease-out infinite;
+}
+.status-pill-x[data-state="fault"]::after {
+  animation-duration: 1.4s;
+}
+@keyframes alarm {
+  from {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+@keyframes pill-shake {
+  0%,
+  88%,
+  100% {
+    transform: translateX(0);
+  }
+  90% {
+    transform: translateX(-2px);
+  }
+  92% {
+    transform: translateX(2px);
+  }
+  94% {
+    transform: translateX(-2px);
+  }
+  96% {
+    transform: translateX(2px);
+  }
+}
+
+/* Offline: dim, with no motion on the sweep */
+.status-pill-x[data-state="offline"]::after {
+  animation: none;
+  opacity: 0;
+}
+.status-pill-x[data-state="offline"] .pill-core {
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* Text */
+.pill-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  min-width: 0;
+}
+.pill-title {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgb(var(--p));
+  text-shadow: 0 0 12px rgba(var(--p), 0.45);
+}
+.pill-sub {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.2px;
+}
+/* Animated ellipsis feel for standby */
+.status-pill-x[data-state="standby"] .pill-sub {
+  animation: sub-fade 1.8s ease-in-out infinite;
+}
+@keyframes sub-fade {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Live waveform */
+.pill-wave {
+  width: 56px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pill-wave .wave-base {
+  stroke: rgba(var(--p), 0.22);
+  stroke-width: 1.5;
+}
+.pill-wave .wave-run {
+  stroke: rgb(var(--p));
+  stroke-width: 2;
+  stroke-dasharray: 22 78;
+  filter: drop-shadow(0 0 3px rgb(var(--p)));
+  animation: wave-run 1.6s linear infinite;
+}
+@keyframes wave-run {
+  from {
+    stroke-dashoffset: 22;
+  }
+  to {
+    stroke-dashoffset: -78;
+  }
+}
+
+@media (max-width: 600px) {
+  .pill-wave {
+    display: none;
   }
 }
