@@ -160,7 +160,6 @@ export default function Transformer3DModel() {
 
   const vSecA = voltage;
   const vSecB = voltage;
-  const vTotal = voltage * 2.0;
 
   // Latest live values, read by the animation loop every frame
   const live = useRef({});
@@ -186,7 +185,7 @@ export default function Transformer3DModel() {
     },
     secondary: {
       name: "Secondary winding (12-0-12 V)",
-      text: `Heavier gauge, centre-tapped. Each half ${vSecA.toFixed(2)} V, full span ${vTotal.toFixed(2)} V, load ${current.toFixed(2)} A.`,
+      text: `Heavier gauge, centre-tapped. Each half ${vSecA.toFixed(2)} V, load ${current.toFixed(2)} A.`,
     },
     bobbin: {
       name: "Bobbin and Mylar barrier",
@@ -1273,29 +1272,11 @@ export default function Transformer3DModel() {
             Thermal Heatmap
           </button>
           <button
-            className={`t3d-mode-btn ${viewMode === "schematic" ? "active" : ""}`}
-            onClick={() => setViewMode("schematic")}
-          >
-            Vector Wiring
-          </button>
-
-          <button
             className={`t3d-action-btn ${autoRotate ? "active" : ""}`}
             onClick={() => setAutoRotate(!autoRotate)}
             title="Toggle Continuous Rotation"
           >
             {autoRotate ? "⏸ Pause" : "▶ Spin"}
-          </button>
-          <button
-            className="t3d-action-btn"
-            onClick={() => {
-              viewRef.current.rotX = 0.38;
-              viewRef.current.rotY = -0.62;
-              viewRef.current.zoom = 1.0;
-            }}
-            title="Reset Perspective"
-          >
-            ⟲ Reset
           </button>
         </div>
       </div>
@@ -1318,36 +1299,25 @@ export default function Transformer3DModel() {
                   <div className="hud-val">
                     {primaryV.toFixed(1)} <span className="u">V RMS</span>
                   </div>
-                  <div className="hud-pins">Red (Live) • Black (Neutral)</div>
-                </div>
-                <div className="t3d-sensor-chip">
-                  <span className="dot zmpt" /> ZMPT101B Voltage Isolation
                 </div>
               </div>
 
               {/* Secondary 12-0-12 Side */}
               <div className="t3d-terminal-hud right">
                 <div className="t3d-hud-card secondary">
-                  <div className="hud-tag">12-0-12 CENTER-TAPPED SECONDARY</div>
+                  <div className="hud-tag">SECONDARY OUTPUT (12 V PER LEG)</div>
                   <div className="ct-row">
-                    <span className="leg">+12V Phase A:</span>
+                    <span className="leg">+12 V leg:</span>
                     <strong>{vSecA.toFixed(2)} V</strong>
                   </div>
                   <div className="ct-row ct">
-                    <span className="leg">0V Center Tap:</span>
-                    <strong>0.00 V (Ref GND)</strong>
+                    <span className="leg">Center tap:</span>
+                    <strong>0.00 V</strong>
                   </div>
                   <div className="ct-row">
-                    <span className="leg">-12V Phase B:</span>
+                    <span className="leg">−12 V leg:</span>
                     <strong>{vSecB.toFixed(2)} V</strong>
                   </div>
-                  <div className="ct-total">
-                    <span>Full Span (12V-12V):</span>
-                    <strong>{vTotal.toFixed(2)} V AC</strong>
-                  </div>
-                </div>
-                <div className="t3d-sensor-chip">
-                  <span className="dot acs" /> ACS712 Current Sensor Tap
                 </div>
               </div>
 
@@ -1406,9 +1376,6 @@ export default function Transformer3DModel() {
                     {fanActive ? "FORCED COOLING ON" : "STANDBY"}
                   </span>
                 </div>
-                <div className="hud-pill hint">
-                  <span>🖱️ Drag to rotate • Scroll to zoom • Hover a part</span>
-                </div>
               </div>
             </div>
           </div>
@@ -1419,8 +1386,6 @@ export default function Transformer3DModel() {
               <p>
                 The 12-0-12V secondary coil features a central ground tap that
                 produces two balanced 12V AC phase legs with 180° phase shift.
-                Across both outer terminals, the total voltage reaches 24V AC
-                RMS.
               </p>
 
               <div className="sch-grid-boxes">

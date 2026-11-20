@@ -26,7 +26,6 @@ function downloadCsv(rows, name) {
 
 export default function AnalyticsModal({ cfg, onClose }) {
   const { history } = useTelemetry();
-  const [mode, setMode] = useState("line");
   const [range, setRange] = useState("live");
   const [remote, setRemote] = useState({ rows: [], loading: false, error: null });
   const closeRef = useRef(null);
@@ -109,20 +108,17 @@ export default function AnalyticsModal({ cfg, onClose }) {
               </button>
             ))}
           </div>
-          <div className="graph-mode-selector" role="group" aria-label="Chart type">
-            {[["line", "📈 Line"], ["area", "🌊 Area"], ["bar", "📊 Bar"]].map(([m, label]) => (
-              <button key={m} type="button" className={`mode-btn ${mode === m ? "active" : ""}`} onClick={() => setMode(m)}>
-                {label}
-              </button>
-            ))}
-          </div>
+          <span className="chart-legend">
+            <i style={{ background: cfg.color, boxShadow: `0 0 10px ${cfg.color}` }} />
+            {cfg.title}
+          </span>
         </div>
 
         <div className="chart-container">
           {range !== "live" && remote.error ? (
             <div className="chart-message">{remote.error}</div>
           ) : (
-            <InteractiveChart data={data} cfg={cfg} mode={mode} />
+            <InteractiveChart key={`${cfg.key}-${range}`} data={data} cfg={cfg} />
           )}
         </div>
 

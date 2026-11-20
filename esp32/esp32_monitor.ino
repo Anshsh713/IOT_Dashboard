@@ -77,30 +77,45 @@ const float CURRENT_ZERO_CUTOFF_A = 0.10f;
 const float SMOOTH_ALPHA_V = 0.20f; 
 const float SMOOTH_ALPHA_I = 0.25f; 
 
-// ---------- Protection & Relay Thresholds ----------
-const float THRESHOLD_CURRENT_OVERLOAD_A = 1.0f;  // Fan turns ON when Current > 1.0 A
-const float THRESHOLD_SHORT_CIRCUIT_A    = 2.2f;  // Critical short circuit limit
-const float FAN_ON_TEMP                  = 40.0f; // Fan turns ON when Temp >= 40.0 °C
-const float FAN_OFF_TEMP                 = 35.0f; // Fan turns OFF when Temp <= 35.0 °C
+// ---------- Protection & Relay Thresholds with Hysteresis ----------
+const float THRESHOLD_CURRENT_OVERLOAD_A = 1.05f; // Trip at 1.05 A
+const float THRESHOLD_CURRENT_RELEASE_A  = 0.85f; // Restore at 0.85 A (eliminates relay chattering!)
+const float THRESHOLD_SHORT_CIRCUIT_A    = 2.20f; // Critical short circuit limit
+const float FAN_ON_TEMP                  = 40.0f; // Fan turns ON / Trip when Temp >= 40.0 °C
+const float FAN_OFF_TEMP                 = 35.0f; // Fan turns OFF / Restore when Temp <= 35.0 °C
 const int   DHT_FAIL_LIMIT               = 5;
 const bool  FAN_ON_SENSOR_FAILURE        = false;
 const unsigned long DHT_FAILSAFE_DELAY_MS = 120000;
 
-// RELAY POLARITY: Active LOW relay board (LOW = Fan ON, HIGH = Fan OFF)
-const bool  RELAY_ACTIVE_HIGH            = false; 
+// ====================================================================
+// RELAY & CIRCUIT TRIP CONFIGURATION:
+// In this project:
+//   - NORMAL STATE (No Fault):
+//       Relay is ON (Energized) -> Main circuit is CONNECTED, Fan is OFF.
+//   - FAULT / TRIP STATE (Overload / Overheat / Short Circuit):
+//       Relay is OFF (De-energized) -> Main circuit TRIPS & disconnects, Fan turns ON!
+//
+// Active-LOW relay module: LOW = Relay coil ON, HIGH = Relay coil OFF
+// ====================================================================
+const bool RELAY_ACTIVE_LOW = true; 
 
 // ---------- Relay State & Transition Settling ----------
-bool lastRelayState                 = false;
+bool lastRelayState                 = true; // Starts in Normal State (Relay ON, Fan OFF)
 unsigned long relayChangedAt        = 0;
 const unsigned long RELAY_SETTLE_TIME = 600; // 600ms sensor settling window after relay switch
 
-void setRelay(bool on) {
-  if (on != lastRelayState) {
-    digitalWrite(RELAY_PIN, (on == RELAY_ACTIVE_HIGH) ? HIGH : LOW);
-    lastRelayState = on;
+void setRelay(bool relayOn) {
+  // relayOn == true  -> Relay energized (Circuit CONNECTED, Fan OFF)
+  // relayOn == false -> Relay de-energized/tripped (Circuit DISCONNECTED, Fan ON)
+  if (relayOn != lastRelayState) {
+    digitalWrite(RELAY_PIN, (relayOn == RELAY_ACTIVE_LOW) ? LOW : HIGH);
+    lastRelayState = relayOn;
     relayChangedAt = millis();
-    Serial.printf("[Relay] State changed to %s. Settling sensors for %lu ms.\n", 
-                  on ? "ON (Cooling Fan Active)" : "OFF (Standby)", RELAY_SETTLE_TIME);
+    Serial.printf("[Relay] %s -> Main Circuit: %s | Cooling Fan: %s (Settling %lu ms)\n", 
+                  relayOn ? "ON (Energized)" : "OFF (TRIPPED)",
+                  relayOn ? "CONNECTED (Power Normal)" : "DISCONNECTED (Protection Trip)",
+                  relayOn ? "OFF" : "ON (Active Cooling)",
+                  RELAY_SETTLE_TIME);
   }
 }
 
