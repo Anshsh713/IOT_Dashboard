@@ -808,16 +808,6 @@ h1 {
     border-color 0.3s,
     box-shadow 0.3s;
 }
-.dashboard.status-disconnected-green .transformer-3d-card {
-  border-color: rgba(255, 255, 255, 0.32);
-}
-.dashboard.status-connected-blue .transformer-3d-card {
-  border-color: rgba(14, 165, 233, 0.32);
-}
-.dashboard.status-fault-red .transformer-3d-card {
-  border-color: rgba(239, 68, 68, 0.48);
-}
-
 .t3d-top-bar {
   padding: 14px 18px;
   display: flex;
@@ -841,7 +831,7 @@ h1 {
   border-radius: 999px;
   background: var(--status-theme-bg, rgba(14, 165, 233, 0.12));
   color: var(--status-theme-color, #0ea5e9);
-  border: 1px solid var(--status-theme-border, rgba(14, 165, 233, 0.3));
+  border: 1px solid var(--border-color);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -886,12 +876,12 @@ h1 {
 .t3d-mode-btn.active {
   background: var(--bg-tertiary);
   color: var(--status-theme-color, #0ea5e9);
-  border-color: var(--status-theme-color, #0ea5e9);
-  box-shadow: 0 0 10px var(--status-theme-glow, rgba(14, 165, 233, 0.2));
+  border-color: var(--border-hover);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
 }
 .t3d-action-btn.active {
   color: var(--status-theme-color, #0ea5e9);
-  border-color: var(--status-theme-border, #0ea5e9);
+  border-color: var(--border-hover);
 }
 
 .t3d-viewport {
@@ -1164,15 +1154,7 @@ h1 {
   flex: 1;
   transition: border-color 0.3s;
 }
-.dashboard.status-disconnected-green .center-tap-hero-card {
-  border-color: rgba(255, 255, 255, 0.32);
-}
-.dashboard.status-connected-blue .center-tap-hero-card {
-  border-color: rgba(14, 165, 233, 0.32);
-}
-.dashboard.status-fault-red .center-tap-hero-card {
-  border-color: rgba(239, 68, 68, 0.48);
-}
+
 
 .ct-hero-header {
   display: flex;
@@ -1432,16 +1414,6 @@ h1 {
   margin-bottom: 24px;
   transition: border-color 0.3s;
 }
-.dashboard.status-disconnected-green .operations-hub-card {
-  border-color: rgba(255, 255, 255, 0.32);
-}
-.dashboard.status-connected-blue .operations-hub-card {
-  border-color: rgba(14, 165, 233, 0.32);
-}
-.dashboard.status-fault-red .operations-hub-card {
-  border-color: rgba(239, 68, 68, 0.48);
-}
-
 .ops-header {
   padding: 14px 20px;
   display: flex;
@@ -1533,10 +1505,10 @@ h1 {
     border-color 0.2s;
 }
 .modern-metric-card:hover {
-  border-color: var(--status-theme-border, var(--border-hover));
+  border-color: var(--border-hover);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.35),
-    0 0 16px var(--status-theme-glow, transparent);
+    0 0 16px rgba(255, 255, 255, 0.05);
 }
 .compact-sparkline-wrap {
   margin: 10px 0 6px;
@@ -1719,7 +1691,7 @@ body::before {
   )
   .model-tag {
   background: var(--status-theme-bg);
-  border: 1px solid var(--status-theme-border);
+  border: 1px solid var(--border-color);
 }
 
 /* Banner variants */
@@ -1861,14 +1833,29 @@ body::before {
   background: linear-gradient(
     90deg,
     transparent,
-    var(--accent-cyan),
-    var(--electric-blue),
-    var(--electric-violet),
+    var(--header-line-dark),
+    var(--header-line-mid),
+    var(--header-line-light),
     transparent
   );
   background-size: 200% 100%;
   animation: electric-flow 6s linear infinite;
   opacity: 0.85;
+}
+.dashboard.status-disconnected-green .header::after {
+  --header-line-dark: #171717;
+  --header-line-mid: #777;
+  --header-line-light: #fff;
+}
+.dashboard.status-connected-blue .header::after {
+  --header-line-dark: #082f49;
+  --header-line-mid: #1d4ed8;
+  --header-line-light: #7dd3fc;
+}
+.dashboard.status-fault-red .header::after {
+  --header-line-dark: #450a0a;
+  --header-line-mid: #b91c1c;
+  --header-line-light: #fca5a5;
 }
 @keyframes electric-flow {
   to {
@@ -1921,11 +1908,11 @@ body::before {
 }
 .card:hover,
 .modern-metric-card:hover {
-  border-color: var(--status-theme-border, var(--border-hover));
+  border-color: var(--border-hover);
   box-shadow:
-    0 0 0 1px var(--status-theme-border, transparent),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
     0 12px 36px rgba(0, 0, 0, 0.45),
-    0 0 28px var(--status-theme-glow, rgba(0, 229, 255, 0.18));
+    0 0 28px rgba(255, 255, 255, 0.04);
 }
 .metrics-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1953,8 +1940,8 @@ body::before {
 }
 .ops-tab-btn.active {
   box-shadow:
-    inset 0 -2px 0 var(--status-theme-color, var(--accent-cyan)),
-    0 0 14px var(--status-theme-glow, transparent);
+    inset 0 -2px 0 var(--border-hover),
+    0 0 14px rgba(255, 255, 255, 0.04);
 }
 .ops-content {
   padding: 22px 24px;
@@ -2030,8 +2017,8 @@ body::before {
   place-items: center;
   color: var(--status-theme-color, rgb(var(--on-rgb)));
   background: var(--bg-card);
-  border: 1px solid var(--status-theme-border, var(--border-color));
-  box-shadow: 0 0 22px var(--status-theme-glow, rgba(var(--on-rgb), 0.25));
+  border: 1px solid var(--border-color);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.05);
   transition: color 0.4s, border-color 0.4s, box-shadow 0.4s;
 }
 .hdr-logo svg {
@@ -2294,4 +2281,175 @@ body::before {
   .pill-wave {
     display: none;
   }
+}
+
+/* ==========================================================================
+   PART 5: SYSTEM STATUS BANNER
+   ========================================================================== */
+
+.sys-banner {
+  --p: var(--on-rgb);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  background: linear-gradient(90deg, rgba(var(--p), 0.12), var(--bg-card) 65%);
+  box-shadow: 0 0 22px rgba(var(--p), 0.1);
+  transition: border-color 0.4s, background 0.4s, box-shadow 0.4s;
+}
+.sys-banner[data-state="standby"] {
+  --p: var(--off-rgb);
+}
+.sys-banner[data-state="live"] {
+  --p: var(--on-rgb);
+}
+.sys-banner[data-state="fault"],
+.sys-banner[data-state="trip"] {
+  --p: var(--fault-rgb);
+}
+.sys-banner[data-state="warn"] {
+  --p: 255, 225, 74;
+}
+.sys-banner[data-state="idle"] {
+  --p: 159, 180, 217;
+}
+.sys-banner[data-state="warn"] {
+  border-color: rgba(255, 225, 74, 0.45);
+}
+.sys-banner[data-state="fault"],
+.sys-banner[data-state="trip"] {
+  border-color: rgba(var(--fault-rgb), 0.55);
+}
+
+/* Icon */
+.sys-icon {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.sys-core {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgb(var(--p));
+  box-shadow: 0 0 10px rgba(var(--p), 0.9);
+  position: relative;
+  z-index: 2;
+}
+.sys-icon::before,
+.sys-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--p), 0.7);
+  opacity: 0;
+}
+
+/* Live: slow ripples */
+.sys-banner[data-state="live"] .sys-icon::before {
+  animation: ripple 1.8s ease-out infinite;
+}
+.sys-banner[data-state="live"] .sys-icon::after {
+  animation: ripple 1.8s ease-out 0.9s infinite;
+}
+
+/* Standby: radar sweep */
+.sys-banner[data-state="standby"] .sys-icon::before {
+  opacity: 1;
+  border: 1px solid rgba(var(--p), 0.45);
+  background: conic-gradient(
+    from 0deg,
+    rgba(var(--p), 0.55),
+    rgba(var(--p), 0) 40%
+  );
+  animation: radar 2s linear infinite;
+}
+.sys-banner[data-state="standby"] .sys-core {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+/* Warning: slow blink */
+.sys-banner[data-state="warn"] .sys-core {
+  animation: alarm 1s ease-in-out infinite alternate;
+}
+.sys-banner[data-state="warn"] .sys-icon::before {
+  animation: ripple 1.6s ease-out infinite;
+}
+
+/* Fault: fast flash, ring, and border pulse */
+.sys-banner[data-state="fault"],
+.sys-banner[data-state="trip"] {
+  animation: electric-alarm 1.8s ease-in-out infinite;
+}
+.sys-banner[data-state="fault"] .sys-core,
+.sys-banner[data-state="trip"] .sys-core {
+  animation: alarm 0.45s ease-in-out infinite alternate;
+}
+.sys-banner[data-state="fault"] .sys-icon::before,
+.sys-banner[data-state="trip"] .sys-icon::before {
+  animation: ripple 0.9s ease-out infinite;
+}
+
+/* Trip: stronger look */
+.sys-banner[data-state="trip"] {
+  background: linear-gradient(90deg, rgba(var(--p), 0.22), var(--bg-card) 65%);
+}
+
+/* Idle: calm */
+.sys-banner[data-state="idle"] .sys-core {
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+/* Text */
+.sys-body {
+  flex: 1;
+  min-width: 0;
+}
+.sys-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgb(var(--p));
+  text-shadow: 0 0 12px rgba(var(--p), 0.4);
+}
+.sys-detail {
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.sys-banner[data-state="standby"] .sys-detail {
+  animation: sub-fade 1.8s ease-in-out infinite;
+}
+
+/* Fault chips */
+.sys-chips {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sys-chip {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(var(--p), 0.14);
+  border: 1px solid rgba(var(--p), 0.45);
 }
