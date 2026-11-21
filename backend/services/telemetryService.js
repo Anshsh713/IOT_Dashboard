@@ -35,6 +35,10 @@ function isValidTelemetryPayload(body) {
   );
 }
 
+function clearFaultStreaks() {
+  Object.keys(streaks).forEach((type) => delete streaks[type]);
+}
+
 // Keep a fault only after it has been present for enough consecutive samples
 function confirmFaults(candidates) {
   const present = new Set(candidates.map((f) => f.type));
@@ -147,17 +151,17 @@ function processTelemetry(raw, now = Date.now()) {
 
   // Rule:
   // 1 or 2 faults -> Fan turns ON automatically to cool down the unit.
-  // 3 or more faults (or SHORT_CIRCUIT) -> Trip/close connection + Warning signal on screen.
-  const connectionClosed = faultCount >= 3 || isShortCircuit;
+  // 3 or more faults (or SHORT_CIRCUIT / Hardware Trip) -> Trip/close connection + Warning signal on screen.
+  const connectionClosed =
+    faultCount >= 3 || isShortCircuit || raw.connectionClosed === true;
 
   // Fan active decision:
-  // If 1 or more faults are active -> Fan forced ON.
-  // If temperature >= 40.0°C -> Fan forced ON.
-  // If temperature <= 35.0°C and 0 faults -> Fan turns OFF.
+  // If hardware reports fan is active or 1+ faults are confirmed -> Fan is ON.
+  // If hardware fan is off, temperature <= 35.0°C and 0 faults -> Fan is OFF.
   let isFanEngaged = raw.fanActive === true;
   if (faultCount >= 1 || (tempVal !== null && tempVal >= THRESHOLDS.TEMP_OVERHEAT_C)) {
     isFanEngaged = true;
-  } else if (tempVal !== null && tempVal <= THRESHOLDS.TEMP_FAN_OFF_C && faultCount === 0) {
+  } else if (raw.fanActive === false && tempVal !== null && tempVal <= THRESHOLDS.TEMP_FAN_OFF_C && faultCount === 0) {
     isFanEngaged = false;
   }
 
@@ -221,4 +225,4 @@ function processTelemetry(raw, now = Date.now()) {
   };
 }
 
-module.exports = { isValidTelemetryPayload, processTelemetry };
+module.exports = { isValidTelemetryPayload, processTelemetry, clearFaultStreaks };

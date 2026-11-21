@@ -1,7 +1,30 @@
 const telemetryStore = require("../models/telemetryModel");
 const { THRESHOLDS, CALIBRATION } = require("../config/constants");
-const { isValidTelemetryPayload, processTelemetry } = require("../services/telemetryService");
+const { isValidTelemetryPayload, processTelemetry, clearFaultStreaks } = require("../services/telemetryService");
 const { computeInsights } = require("../services/insightsService");
+
+let pendingReset = false;
+
+/** POST /api/reset: manual circuit restart command from the dashboard */
+exports.resetCircuit = (req, res) => {
+  clearFaultStreaks();
+  pendingReset = true;
+  const current = telemetryStore.latestReading;
+  if (current) {
+    current.connectionClosed = false;
+    current.faultCount = 0;
+    current.faults = [];
+    current.fanActive = false;
+    current.faultDetected = false;
+    current.systemState = current.isMainsOn ? "ENERGIZED" : "STANDBY";
+  }
+  console.log("[Circuit Reset] Protection manually reset from Dashboard.");
+  res.json({
+    success: true,
+    message: "Circuit protection reset command initiated",
+    connectionClosed: false,
+  });
+};
 
 /** GET /api/readings: connection state, latest telemetry, rolling in-memory history */
 exports.getReadings = (req, res) => {
@@ -66,6 +89,11 @@ exports.postReadings = (req, res) => {
     } | Faults: ${detectedFaults.length}${connectionClosed ? " | 🚨 CONNECTION CLOSED (TRIPPED)" : ""}`
   );
 
+  const resetTriggered = pendingReset;
+  if (pendingReset) {
+    pendingReset = false;
+  }
+
   res.json({
     success: true,
     timestamp: processedReading.timestamp,
@@ -74,5 +102,6 @@ exports.postReadings = (req, res) => {
     fanActive: isFanEngaged,
     connectionClosed,
     disconnect: connectionClosed,
+    resetCircuit: resetTriggered,
   });
 };

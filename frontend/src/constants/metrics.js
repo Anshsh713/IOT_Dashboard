@@ -91,7 +91,7 @@ export const METRICS = {
 export const FAULT_RULES = [
   {
     name: "Multi-Fault Protection (Fan & Trip)",
-    desc: "1 or 2 faults trigger Cooling Fan (D23). 3+ concurrent faults (or short circuit) trip and close connection.",
+    desc: "1 or 2 faults trigger Cooling Fan (D23). 3+ concurrent faults trigger Tier 2 protection.",
     types: ["CURRENT_OVERLOAD", "SHORT_CIRCUIT", "OVER_TEMPERATURE", "UNDER_VOLTAGE", "OVER_VOLTAGE", "SUPPLY_LOSS", "VOLTAGE_COLLAPSE"],
     limit: () => "Tier 1: 1-2 Fan | Tier 2: 3+ Trip",
   },
@@ -102,25 +102,9 @@ export const FAULT_RULES = [
     limit: (t) => `> ${t.CURRENT_OVERLOAD_A} A`,
   },
   {
-    name: "Short circuit",
-    desc: "High current with collapsed voltage. Raised immediately.",
-    types: ["SHORT_CIRCUIT"],
-  },
-  {
     name: "Over-temperature",
     desc: "Fan relay engages until the temperature falls to the release value.",
     types: ["OVER_TEMPERATURE"],
     limit: (t) => `≥ ${t.TEMP_OVERHEAT_C} °C`,
-  },
-  {
-    name: "Secondary voltage window",
-    desc: "Checked only when energized; 0 V alone is standby.",
-    types: ["UNDER_VOLTAGE", "OVER_VOLTAGE"],
-    limit: (t) => `${t.VOLTAGE_UNDER_V} - ${t.VOLTAGE_OVER_V} V`,
-  },
-  {
-    name: "Supply loss / voltage collapse",
-    desc: "No voltage when the line should be energized. Certain only with the GPIO 27 switch input.",
-    types: ["SUPPLY_LOSS", "VOLTAGE_COLLAPSE"],
   },
 ];

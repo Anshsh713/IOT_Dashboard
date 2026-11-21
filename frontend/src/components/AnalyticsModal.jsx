@@ -77,66 +77,94 @@ export default function AnalyticsModal({ cfg, onClose }) {
   const spacing =
     data.length > 1 ? ((data[data.length - 1].timestamp - data[0].timestamp) / (data.length - 1) / 1000).toFixed(1) : null;
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div>
-            <span className="eyebrow">Detailed analytics</span>
-            <h2 id="modal-title" style={{ margin: "4px 0 0", fontSize: 22 }}>{cfg.title}</h2>
-            <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>{cfg.desc}</p>
-          </div>
-          <button ref={closeRef} type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">✕</button>
+  const content = (
+    <div
+      className="modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="analytics-title"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="modal-header">
+        <div>
+          <span className="eyebrow">Detailed analytics</span>
+          <h2 id="analytics-title" style={{ margin: "4px 0 0", fontSize: 22 }}>
+            {cfg.title}
+          </h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
+            {cfg.desc}
+          </p>
         </div>
+        <button
+          ref={closeRef}
+          type="button"
+          className="modal-close-btn"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
 
-        <div className="modal-stat-row">
-          {[["Current", stats?.current], ["Minimum", stats?.min], ["Maximum", stats?.max], ["Average", stats?.avg]].map(([label, v]) => (
-            <div className="stat-box" key={label}>
-              <div className="stat-label">{label}</div>
-              <div className="stat-value" style={label === "Current" ? { color: cfg.color } : undefined}>
-                {v == null ? "--" : v.toFixed(cfg.dec)} {cfg.unit}
-              </div>
+      <div className="modal-stat-row">
+        {[
+          ["Current", stats?.current],
+          ["Minimum", stats?.min],
+          ["Maximum", stats?.max],
+          ["Average", stats?.avg],
+        ].map(([label, v]) => (
+          <div className="stat-box" key={label}>
+            <div className="stat-label">{label}</div>
+            <div className="stat-value" style={label === "Current" ? { color: cfg.color } : undefined}>
+              {v == null ? "--" : v.toFixed(cfg.dec)} {cfg.unit}
             </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="graph-toolbar">
+        <div className="graph-mode-selector" role="group" aria-label="Time range">
+          {RANGES.map(([r, label]) => (
+            <button
+              key={r}
+              type="button"
+              className={`mode-btn ${range === r ? "active" : ""}`}
+              onClick={() => setRange(r)}
+            >
+              {label}
+            </button>
           ))}
         </div>
+        <span className="chart-legend">
+          <i style={{ background: cfg.color }} />
+          {cfg.title}
+        </span>
+      </div>
 
-        <div className="graph-toolbar">
-          <div className="graph-mode-selector" role="group" aria-label="Time range">
-            {RANGES.map(([r, label]) => (
-              <button key={r} type="button" className={`mode-btn ${range === r ? "active" : ""}`} onClick={() => setRange(r)}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <span className="chart-legend">
-            <i style={{ background: cfg.color, boxShadow: `0 0 10px ${cfg.color}` }} />
-            {cfg.title}
-          </span>
-        </div>
+      <div className="chart-container">
+        {range !== "live" && remote.error ? (
+          <div className="chart-message">{remote.error}</div>
+        ) : (
+          <InteractiveChart key={`${cfg.key}-${range}`} data={data} cfg={cfg} />
+        )}
+      </div>
 
-        <div className="chart-container">
-          {range !== "live" && remote.error ? (
-            <div className="chart-message">{remote.error}</div>
-          ) : (
-            <InteractiveChart key={`${cfg.key}-${range}`} data={data} cfg={cfg} />
-          )}
-        </div>
-
-        <div className="modal-footer">
-          <span>
-            {data.length} samples{spacing ? `, about ${spacing} s apart` : ""}
-            {range !== "live" && remote.loading ? " (loading...)" : ""}
-          </span>
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={!data.length}
-            onClick={() => downloadCsv(data, `transformer_${range === "live" ? "live" : range + "min"}.csv`)}
-          >
-            Export CSV
-          </button>
-        </div>
+      <div className="modal-footer">
+        <span>
+          {data.length} samples{spacing ? `, about ${spacing} s apart` : ""}
+          {range !== "live" && remote.loading ? " (loading...)" : ""}
+        </span>
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={!data.length}
+          onClick={() => downloadCsv(data, `transformer_${range === "live" ? "live" : range + "min"}.csv`)}
+        >
+          Export CSV
+        </button>
       </div>
     </div>
   );
+
+  return <div className="modal-overlay" onClick={onClose}>{content}</div>;
 }

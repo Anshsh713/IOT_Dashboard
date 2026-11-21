@@ -40,6 +40,7 @@ export default function MetricCard({
   numeric,
   badge,
   note,
+  state,
   isFault,
   trend = [],
   onClick,
@@ -49,6 +50,7 @@ export default function MetricCard({
   return (
     <motion.div
       className={`card modern-metric-card ${isFault ? "is-fault" : ""} ${isHovered ? "card-hovered" : ""}`}
+      data-state={state}
       role="button"
       tabIndex={0}
       onClick={() => onClick(id)}

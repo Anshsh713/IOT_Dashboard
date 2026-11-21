@@ -9,6 +9,7 @@ export default function FaultBanner() {
     voltageUnavailable,
     lastSeen,
     thresholds: t,
+    resetCircuit,
   } = useTelemetry();
 
   const faultList = faults || [];
@@ -67,6 +68,19 @@ export default function FaultBanner() {
               </li>
             ))}
           </ul>
+        )}
+
+        {connectionClosed && (
+          <div className="sys-reset-row" style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              className="reset-circuit-btn"
+              onClick={() => resetCircuit && resetCircuit()}
+              title="Clear trip condition and restore circuit power"
+            >
+              ⚡ RESTORE &amp; RESTART CIRCUIT
+            </button>
+          </div>
         )}
       </div>
     </div>

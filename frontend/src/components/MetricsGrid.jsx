@@ -55,6 +55,16 @@ export default function MetricsGrid({ onSelectMetric }) {
       note = "Value not yet verified against a reference meter.";
     }
 
+    const state = !connected
+      ? "standby"
+      : isFault
+        ? "fault"
+        : badge.type === "badge-yellow"
+          ? "warn"
+          : badge.type === "badge-gray"
+            ? "idle"
+            : "live";
+
     const trend = connected
       ? history
           .map((h) => h[cfg.key])
@@ -68,11 +78,20 @@ export default function MetricsGrid({ onSelectMetric }) {
       numeric,
       badge,
       note,
+      state,
       isFault,
       trend,
       onClick: onSelectMetric,
     };
   }
+
+  const fanState = !connected
+    ? "standby"
+    : connectionClosed
+      ? "fault"
+      : fanActive
+        ? "warn"
+        : "live";
 
   return (
     <section className="metrics-grid">
@@ -81,7 +100,11 @@ export default function MetricsGrid({ onSelectMetric }) {
       ))}
 
       {/* Cooling Fan Relay Card */}
-      <div className="card" style={{ cursor: "default" }}>
+      <div
+        className="card metric-relay-card"
+        data-state={fanState}
+        style={{ cursor: "default" }}
+      >
         <div className="card-top">
           <span className="card-label">Cooling Fan Relay</span>
           <div className="card-meta">

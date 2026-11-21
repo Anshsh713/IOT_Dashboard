@@ -46,6 +46,33 @@ export function TelemetryProvider({ children }) {
     };
   }, []);
 
+  const resetCircuit = async () => {
+    try {
+      const res = await fetch(`${API_ROOT}/reset`, { method: "POST" });
+      if (res.ok) {
+        setData((prev) => {
+          if (!prev || !prev.readings) return prev;
+          return {
+            ...prev,
+            readings: {
+              ...prev.readings,
+              connectionClosed: false,
+              faultCount: 0,
+              faults: [],
+              fanActive: false,
+              faultDetected: false,
+              systemState: prev.readings.isMainsOn ? "ENERGIZED" : "STANDBY",
+            },
+          };
+        });
+        return true;
+      }
+    } catch (err) {
+      console.error("[Reset] Failed to trigger reset:", err);
+    }
+    return false;
+  };
+
   const value = useMemo(() => {
     const readings = data?.readings;
     const history = data?.history ?? [];
@@ -90,8 +117,9 @@ export function TelemetryProvider({ children }) {
       bannerState,
       thresholds: config?.thresholds ?? DEFAULT_THRESHOLDS,
       calibration: config?.calibration ?? null,
+      resetCircuit,
     };
-  }, [data, error, config]);
+  }, [data, error, config, resetCircuit]);
 
   return <TelemetryContext.Provider value={value}>{children}</TelemetryContext.Provider>;
 }

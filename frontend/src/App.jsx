@@ -8,14 +8,13 @@ import FaultBanner from "./components/FaultBanner";
 import Transformer3DModel from "./components/Transformer3DModel";
 import CenterTapHeroWidget from "./components/CenterTapHeroWidget";
 import MetricsGrid from "./components/MetricsGrid";
-import OperationsHub from "./components/OperationsHub";
 import AnalyticsModal from "./components/AnalyticsModal";
 
 function DashboardContent() {
   const [selectedMetricId, setSelectedMetricId] = useState(null);
   const { connected, faults, connectionClosed } = useTelemetry();
 
-  // Close modal on Escape key press
+  // Close analytics on Escape key press
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && setSelectedMetricId(null);
     window.addEventListener("keydown", onKey);
@@ -54,20 +53,9 @@ function DashboardContent() {
 
       {/* Live Metrics Bento Grid with Hover Smooth Spline Graphs */}
       <section className="metrics-section">
-        <div className="section-title-row">
-          <div className="sec-heading">
-            <span className="sec-chip">TELEMETRY STREAM</span>
-            <h3>Electrical &amp; Environmental Telemetry</h3>
-          </div>
-          <span className="sec-hint">Hover any metric card to reveal live spline graph</span>
-        </div>
         <MetricsGrid onSelectMetric={setSelectedMetricId} />
       </section>
 
-      {/* Modern Operations & Intelligence Hub (Tabbed) */}
-      <OperationsHub />
-
-      {/* Analytics Modal for Deep Dive */}
       {activeMetricCfg && (
         <AnalyticsModal
           cfg={activeMetricCfg}

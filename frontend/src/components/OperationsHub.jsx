@@ -1,19 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import InsightsPanel from "./InsightsPanel";
 import SensorHealthPanel from "./SensorHealthPanel";
 import FaultRulesPanel from "./FaultRulesPanel";
 import FaultLog from "./FaultLog";
-import CalibrationHelper from "./CalibrationHelper";
 import { useTelemetry } from "../context/TelemetryContext";
 
 export default function OperationsHub() {
-  const [activeTab, setActiveTab] = useState("insights");
+  const [activeTab, setActiveTab] = useState("health");
   const { faults } = useTelemetry();
   const faultCount = faults ? faults.length : 0;
 
   const tabs = [
-    { id: "insights", label: "Predictive Insights", icon: "📊" },
     { id: "health", label: "Sensor Diagnostics", icon: "🩺" },
     { id: "rules", label: "Safety Rules & Matrix", icon: "🛡️" },
     {
@@ -22,7 +19,6 @@ export default function OperationsHub() {
       icon: "📜",
       badge: faultCount > 0 ? `${faultCount}` : null,
     },
-    { id: "calib", label: "Sensor Calibration", icon: "⚙️" },
   ];
 
   return (
@@ -57,11 +53,9 @@ export default function OperationsHub() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            {activeTab === "insights" && <InsightsPanel />}
             {activeTab === "health" && <SensorHealthPanel />}
             {activeTab === "rules" && <FaultRulesPanel />}
             {activeTab === "log" && <FaultLog />}
-            {activeTab === "calib" && <CalibrationHelper />}
           </motion.div>
         </AnimatePresence>
       </div>

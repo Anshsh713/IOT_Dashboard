@@ -8,6 +8,8 @@ router.get("/config", telemetryController.getConfig);
 router.get("/faults", telemetryController.getFaults);
 router.get("/insights", telemetryController.getInsights);
 router.get("/history", telemetryController.getHistory);
+router.post("/reset", telemetryController.resetCircuit);
+router.get("/reset", telemetryController.resetCircuit);
 router.post("/readings", apiKey, telemetryController.postReadings);
 
 module.exports = router;

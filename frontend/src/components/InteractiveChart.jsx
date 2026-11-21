@@ -156,21 +156,6 @@ export default function InteractiveChart({ data, cfg }) {
             <stop offset="55%" stopColor={cfg.color} stopOpacity="0.14" />
             <stop offset="100%" stopColor={cfg.color} stopOpacity="0" />
           </linearGradient>
-          <filter
-            id={`glow-${uid}`}
-            x="-10%"
-            y="-30%"
-            width="120%"
-            height="160%"
-          >
-            <feDropShadow
-              dx="0"
-              dy="0"
-              stdDeviation="3.5"
-              floodColor={cfg.color}
-              floodOpacity="0.75"
-            />
-          </filter>
         </defs>
 
         {/* Horizontal grid + Y labels */}
@@ -260,7 +245,6 @@ export default function InteractiveChart({ data, cfg }) {
           strokeWidth="2.6"
           strokeLinejoin="round"
           strokeLinecap="round"
-          filter={`url(#glow-${uid})`}
           className="ch-line"
         />
 
