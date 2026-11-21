@@ -146,8 +146,8 @@ export default function CenterTapHeroWidget() {
               </div>
             </div>
             <div className="ct-full-span">
-              <span>Full Secondary Span (Phase A ↔ Phase B):</span>
-              <strong>{(voltage * 2).toFixed(2)} V RMS</strong>
+              <span>Half Secondary Span (Phase A ↔ Center Tap):</span>
+              <strong>{voltage.toFixed(2)} V</strong>
             </div>
           </div>
 

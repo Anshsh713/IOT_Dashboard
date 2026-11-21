@@ -3,9 +3,15 @@ import { useTelemetry } from "../context/TelemetryContext";
 
 const STATUS_BADGE = {
   ok: { type: "badge-green", text: "OK" },
-  uncalibrated: { type: "badge-yellow", text: "Uncalibrated" },
   unavailable: { type: "badge-gray", text: "No data" },
 };
+
+function getSensorBadge(status) {
+  if (status === "ok" || status === "uncalibrated") {
+    return STATUS_BADGE.ok;
+  }
+  return STATUS_BADGE.unavailable;
+}
 
 export default function SensorHealthPanel() {
   const { connected, readings, data } = useTelemetry();
@@ -28,12 +34,12 @@ export default function SensorHealthPanel() {
     {
       name: "Voltage sensor (ZMPT101B)",
       desc: "Pin D35. Missing readings are shown as unavailable, never as 0 V.",
-      badge: STATUS_BADGE[readings?.voltageStatus] ?? STATUS_BADGE.unavailable,
+      badge: getSensorBadge(readings?.voltageStatus),
     },
     {
       name: "Current sensor (ACS712)",
       desc: "Pin D34. Needs a no-load offset check and a known-load check.",
-      badge: STATUS_BADGE[readings?.currentStatus] ?? STATUS_BADGE.unavailable,
+      badge: getSensorBadge(readings?.currentStatus),
     },
     {
       name: "Temperature / humidity (DHT22)",

@@ -1657,67 +1657,6 @@ h1 {
   margin: 10px 0 6px;
 }
 
-.hover-smooth-graph-container {
-  margin: 12px 0 8px;
-  padding: 12px 14px;
-  background: rgba(20, 20, 20, 0.92);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.05),
-    0 6px 18px rgba(0, 0, 0, 0.4);
-}
-.hsg-header {
-  margin-bottom: 8px;
-}
-.hsg-stat-chips {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.hsg-chip {
-  font-size: 11px;
-  font-family: "JetBrains Mono", monospace;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  padding: 3px 8px;
-  border-radius: 6px;
-  color: var(--text-secondary);
-}
-.hsg-chip.current {
-  color: var(--text-primary);
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.hsg-chip.up {
-  color: var(--accent-green);
-}
-.hsg-chip.down {
-  color: var(--accent-red);
-}
-
-.hsg-svg-wrap {
-  position: relative;
-  width: 100%;
-}
-.hsg-svg {
-  width: 100%;
-  height: 120px;
-  display: block;
-}
-.hsg-footer-hint {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10.5px;
-  color: var(--text-muted);
-  margin-top: 6px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
 
 /* ====================================================================
    RESPONSIVE LAYOUT ADJUSTMENTS

@@ -2,7 +2,7 @@ import { useTelemetry } from "../context/TelemetryContext";
 import { METRICS } from "../constants/metrics";
 import MetricCard from "./MetricCard";
 
-const STATUS_RANK = { ok: 0, uncalibrated: 1, unavailable: 2 };
+const STATUS_RANK = { ok: 0, unavailable: 1 };
 
 export default function MetricsGrid({ onSelectMetric }) {
   const {
@@ -25,7 +25,12 @@ export default function MetricsGrid({ onSelectMetric }) {
 
     // Worst status among the sensors this metric depends on; a missing value counts as unavailable
     const status = (cfg.statusFields ?? [])
-      .map((f) => readings?.[f] ?? "ok")
+      .map((f) => {
+        const sensorStatus = readings?.[f];
+        return sensorStatus === "uncalibrated"
+          ? "ok"
+          : sensorStatus ?? "ok";
+      })
       .reduce(
         (a, b) => (STATUS_RANK[b] > STATUS_RANK[a] ? b : a),
         raw == null ? "unavailable" : "ok",
@@ -50,9 +55,6 @@ export default function MetricsGrid({ onSelectMetric }) {
     } else if (cfg.electrical && !isMainsOn) {
       badge = { type: "badge-gray", text: "Mains OFF" };
       note = "Transformer is switched off (0 is normal standby)";
-    } else if (status === "uncalibrated") {
-      badge = { type: "badge-yellow", text: "Uncalibrated" };
-      note = "Value not yet verified against a reference meter.";
     }
 
     const state = !connected

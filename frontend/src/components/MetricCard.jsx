@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import HoverSmoothGraph from "./HoverSmoothGraph";
+import { motion } from "framer-motion";
 
 function CompactSparkline({ values, color }) {
   if (values.length < 2) return null;
@@ -45,17 +43,13 @@ export default function MetricCard({
   trend = [],
   onClick,
 }) {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <motion.div
-      className={`card modern-metric-card ${isFault ? "is-fault" : ""} ${isHovered ? "card-hovered" : ""}`}
+      className={`card modern-metric-card ${isFault ? "is-fault" : ""}`}
       data-state={state}
       role="button"
       tabIndex={0}
       onClick={() => onClick(id)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onKeyDown={(e) =>
         (e.key === "Enter" || e.key === " ") &&
         (e.preventDefault(), onClick(id))
@@ -77,26 +71,18 @@ export default function MetricCard({
         <span className="card-unit">{cfg.unit}</span>
       </div>
 
-      {/* When hovered: Reveal the smooth liquid spline graph! */}
-      <AnimatePresence>
-        {isHovered && trend.length >= 2 ? (
-          <HoverSmoothGraph values={trend} cfg={cfg} isVisible={isHovered} />
-        ) : (
-          <motion.div
-            className="compact-sparkline-wrap"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-          >
-            <CompactSparkline values={trend} color={cfg.color} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div
+        className="compact-sparkline-wrap"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15 }}
+      >
+        <CompactSparkline values={trend} color={cfg.color} />
+      </motion.div>
 
       <p className="card-footer">{note}</p>
       <div className="card-click-hint">
-        <span>{isHovered ? "Click for detailed analytics" : "Hover for live graph"}</span>
+        <span>Click for detailed analytics</span>
         <span>↗</span>
       </div>
     </motion.div>

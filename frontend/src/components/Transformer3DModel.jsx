@@ -181,7 +181,7 @@ export default function Transformer3DModel() {
     },
     primary: {
       name: "Primary winding (230 V)",
-      text: `Fine enamelled copper, ~19:1 step-down ratio. Input ${primaryV.toFixed(1)} V RMS.`,
+      text: `Fine enamelled copper, ~19:1 step-down ratio. Input ${primaryV.toFixed(1)} V.`,
     },
     secondary: {
       name: "Secondary winding (12-0-12 V)",
@@ -1297,7 +1297,7 @@ export default function Transformer3DModel() {
                 <div className="t3d-hud-card primary">
                   <div className="hud-tag">PRIMARY INPUT (230V AC)</div>
                   <div className="hud-val">
-                    {primaryV.toFixed(1)} <span className="u">V RMS</span>
+                    {primaryV.toFixed(1)} <span className="u">V</span>
                   </div>
                 </div>
               </div>
@@ -1361,7 +1361,7 @@ export default function Transformer3DModel() {
                 </div>
                 <div className="hud-pill">
                   <span className="lbl">Load Current</span>
-                  <span className="num">{current.toFixed(2)} A RMS</span>
+                  <span className="num">{current.toFixed(2)} A</span>
                 </div>
                 <div className="hud-pill">
                   <span className="lbl">Relay Fan (D23)</span>
@@ -1422,7 +1422,7 @@ export default function Transformer3DModel() {
                   <div className="sch-row sec-b">
                     -12V Phase B (Yellow wire) → Pin D34
                   </div>
-                  <div className="sch-spec">Total AC Amplitude: 24.0V RMS</div>
+                  <div className="sch-spec">Total AC Amplitude: 24.0 V</div>
                 </div>
               </div>
             </div>

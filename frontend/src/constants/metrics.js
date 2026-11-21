@@ -16,7 +16,7 @@ export const METRICS = {
   primVoltage: {
     title: "Primary Mains Voltage (estimated)",
     key: "primaryVoltageRms",
-    unit: "V RMS",
+    unit: "V",
     dec: 1,
     color: "#818cf8",
     threshold: 250,
@@ -29,7 +29,7 @@ export const METRICS = {
   secVoltage: {
     title: "Secondary Voltage",
     key: "voltageRms",
-    unit: "V RMS",
+    unit: "V",
     dec: 1,
     color: "#38bdf8",
     threshold: 14.5,
@@ -42,7 +42,7 @@ export const METRICS = {
   current: {
     title: "Load Current",
     key: "currentRms",
-    unit: "A RMS",
+    unit: "A",
     dec: 2,
     color: "#f59e0b",
     threshold: 1.0,
