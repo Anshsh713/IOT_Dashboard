@@ -11,6 +11,7 @@ export default function CenterTapHeroWidget() {
   const temp = readings?.temperatureC ?? 28.0;
   const faultCount = faults ? faults.length : 0;
   const isTrip = connectionClosed || faultCount >= 3;
+  const isFaultRunning = faultCount > 0 || current > (t?.CURRENT_OVERLOAD_A ?? 1.0) || (isTrip && temp >= 35.0);
 
   // Calculate Health Score (100 base, deductions for temperature, current, faults)
   let healthScore = 100;
@@ -116,10 +117,11 @@ export default function CenterTapHeroWidget() {
                     <button
                       type="button"
                       className="ct-quick-reset-btn"
-                      onClick={() => resetCircuit && resetCircuit()}
-                      title="Click to reset tripped circuit"
+                      disabled={isFaultRunning}
+                      onClick={() => !isFaultRunning && resetCircuit && resetCircuit()}
+                      title={isFaultRunning ? "Cannot reset while fault is active" : "Click to reset tripped circuit"}
                     >
-                      ⚡ Reset
+                      {isFaultRunning ? "🔒 Locked" : "⚡ Reset"}
                     </button>
                   )}
                 </div>

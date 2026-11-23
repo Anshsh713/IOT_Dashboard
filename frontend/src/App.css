@@ -2727,8 +2727,67 @@ body::before {
   box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
 }
 
-.reset-circuit-btn:active {
-  transform: translateY(0);
+.reset-circuit-btn:disabled,
+.reset-circuit-btn.locked {
+  background: #27272a !important;
+  color: #71717a !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+  animation: none !important;
+  opacity: 0.65;
+}
+
+.reset-circuit-btn.ready {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: pulse-ready-btn 1.8s infinite;
+}
+
+.reset-circuit-btn.ready:hover {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+}
+
+@keyframes pulse-ready-btn {
+  0%, 100% {
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 22px rgba(16, 185, 129, 0.8);
+  }
+}
+
+.sys-status-badge-normal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
+
+.dot-green-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.ct-quick-reset-btn:disabled {
+  background: rgba(113, 113, 122, 0.15) !important;
+  color: #71717a !important;
+  border-color: #52525b !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
 }
 
 @keyframes pulse-reset-btn {

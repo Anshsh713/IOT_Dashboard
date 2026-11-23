@@ -7,9 +7,17 @@ let pendingReset = false;
 
 /** POST /api/reset: manual circuit restart command from the dashboard */
 exports.resetCircuit = (req, res) => {
+  const current = telemetryStore.latestReading;
+  // Safety Lockout: Cannot reset if fault is actively running or temperature >= 35°C
+  if (current && (current.currentRms > THRESHOLDS.CURRENT_OVERLOAD_A || current.temperatureC >= 35.0 || (current.faults && current.faults.length > 0))) {
+    return res.status(400).json({
+      success: false,
+      message: "Reset blocked: Fault condition is currently active or transformer is still cooling (>= 35°C).",
+    });
+  }
+
   clearFaultStreaks();
   pendingReset = true;
-  const current = telemetryStore.latestReading;
   if (current) {
     current.connectionClosed = false;
     current.faultCount = 0;

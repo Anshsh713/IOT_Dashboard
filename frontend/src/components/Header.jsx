@@ -1,8 +1,15 @@
 import { useTelemetry } from "../context/TelemetryContext";
 
 export default function Header() {
-  const { error, connected, connectionClosed, faults } = useTelemetry();
-  const hasFault = (faults && faults.length > 0) || connectionClosed;
+  const { error, connected, connectionClosed, faults, readings, thresholds: t, resetCircuit } = useTelemetry();
+  const faultList = faults || [];
+  const currentAmps = readings?.currentRms ?? 0;
+  const tempC = readings?.temperatureC ?? 0;
+  const hasFault = faultList.length > 0 || connectionClosed;
+
+  const isOverload = currentAmps > (t?.CURRENT_OVERLOAD_A ?? 1.0);
+  const isOverheat = tempC >= (t?.TEMP_OVERHEAT_C ?? 40.0) || (connectionClosed && tempC >= 35.0);
+  const isFaultRunning = faultList.length > 0 || isOverload || isOverheat;
 
   // Backend offline -> gray | Not connected -> white | Fault -> red | Connected -> cyan
   const pillStatusClass = error
@@ -55,7 +62,27 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="header-actions">
+      <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+        {/* Main Circuit Breaker Header Action Button */}
+        {connected && connectionClosed && (
+          <button
+            type="button"
+            className={`reset-circuit-btn ${isFaultRunning ? "locked" : "ready"}`}
+            disabled={isFaultRunning}
+            onClick={() => !isFaultRunning && resetCircuit && resetCircuit()}
+            style={{ margin: 0, padding: "7px 14px", fontSize: "12px" }}
+            title={
+              isFaultRunning
+                ? "Cannot reset while fault is active or cooling (>= 35°C)"
+                : "Click to reconnect main power supply (D22 ON)"
+            }
+          >
+            {isFaultRunning
+              ? `🔒 LOCKED (FAULT ACTIVE)`
+              : `⚡ RESTORE CIRCUIT`}
+          </button>
+        )}
+
         <div
           className={`connection-pill status-pill-x ${pillStatusClass}`}
           data-state={pillState}
